@@ -17,6 +17,7 @@ interface DailyStackProps {
   onSendPostcard: (story: StoryItem) => void;
   onLocateOnMap?: (story: StoryItem) => void;
   onOpenMap: () => void;
+  onOpenCommunityBoard?: () => void;
   onOpenDataPipeline: () => void;
 }
 
@@ -29,6 +30,7 @@ export const DailyStack: React.FC<DailyStackProps> = ({
   onSendPostcard,
   onLocateOnMap,
   onOpenMap,
+  onOpenCommunityBoard,
   onOpenDataPipeline,
 }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -301,6 +303,11 @@ export const DailyStack: React.FC<DailyStackProps> = ({
             >
               <CommunityPage
                 userEntry={journalEntry}
+                onOpenCommunityBoard={onOpenCommunityBoard}
+                onWriteMoment={() => {
+                  setDirection(-1);
+                  setScreen('journal');
+                }}
                 onClose={() => {
                   // End of flow - reset everything
                   setDirection(-1);
