@@ -184,24 +184,31 @@ export const JournalPage: React.FC<JournalPageProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              type="button"
-              onClick={onOpenCommunity}
-              className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-sans-clean font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
-            >
-              <Globe size={14} />
-              <span>Community Board</span>
-            </button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <img
+              src="/journal.svg"
+              alt="Journal notebook"
+              className="w-14 h-14 sm:w-16 sm:h-16 object-contain hidden md:block"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenCommunity}
+                className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-sans-clean font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+              >
+                <Globe size={14} />
+                <span>Community Board</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={onBackToStories}
-              className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-900 font-sans-clean font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-            >
-              <RotateCcw size={14} />
-              <span className="hidden sm:inline">Daily Stories</span>
-            </button>
+              <button
+                type="button"
+                onClick={onBackToStories}
+                className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-900 font-sans-clean font-bold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+              >
+                <RotateCcw size={14} />
+                <span className="hidden sm:inline">Daily Stories</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
