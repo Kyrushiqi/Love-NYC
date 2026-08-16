@@ -122,6 +122,7 @@ export default function App() {
             onSendPostcard={(story) => setPostcardModalStory(story)}
             onLocateOnMap={handleLocateOnMap}
             onOpenMap={() => setViewMode("map")}
+            onOpenCommunityBoard={() => setViewMode("community")}
             onOpenDataPipeline={() => setIsPipelineModalOpen(true)}
           />
         ) : viewMode === "map" ? (

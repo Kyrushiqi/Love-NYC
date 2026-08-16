@@ -3,18 +3,19 @@ import { UserStory, CommunityEntry } from '../types';
 import {
   Share2,
   Heart,
-  CheckCircle,
-  AlertCircle,
   MessageCircle,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
   PenLine,
+  LayoutGrid,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
-  shareToContext,
   getAllCommunityEntries,
+  shareToContext,
   likeCommunityEntry,
 } from '../utils/journalStorage';
 
@@ -33,33 +34,32 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
 }) => {
   const [communityEntries, setCommunityEntries] = useState<CommunityEntry[]>([]);
   const [activeCommunityIndex, setActiveCommunityIndex] = useState<number>(0);
-  const [viewState, setViewState] = useState<'opt_in' | 'celebration' | 'feed'>(
-    userEntry ? 'opt_in' : 'feed'
+  const [viewState, setViewState] = useState<'opt_in' | 'feed'>(
+    userEntry && !userEntry.isSharedToCommunity ? 'opt_in' : 'feed'
   );
   const [isSharing, setIsSharing] = useState<boolean>(false);
   const [shareError, setShareError] = useState<string>('');
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    let isMounted = true;
-
-    getAllCommunityEntries().then((entries) => {
-      if (isMounted) {
-        setCommunityEntries(entries);
-        if (entries.length > 0) {
-          const today = new Date().toDateString();
-          const seed = today
-            .split('')
-            .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-          setActiveCommunityIndex(seed % entries.length);
-        }
+  const loadEntries = async () => {
+    const entries = await getAllCommunityEntries();
+    setCommunityEntries(entries);
+    if (entries.length > 0) {
+      if (userEntry?.isSharedToCommunity) {
+        setActiveCommunityIndex(0);
+      } else {
+        const today = new Date().toDateString();
+        const seed = today
+          .split('')
+          .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        setActiveCommunityIndex(seed % entries.length);
       }
-    });
+    }
+  };
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  useEffect(() => {
+    loadEntries();
+  }, [userEntry]);
 
   const handleShareToCommunity = async () => {
     if (!userEntry) return;
@@ -68,28 +68,29 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
     setShareError('');
 
     try {
-      const success = await shareToContext(userEntry.id);
+      // Pass userEntry object directly so lookup never fails
+      const result = await shareToContext(userEntry);
 
-      if (success) {
+      if (result.success) {
+        userEntry.isSharedToCommunity = true;
+
         confetti({
-          particleCount: 40,
+          particleCount: 45,
           spread: 65,
           origin: { y: 0.65 },
           colors: ['#A855F7', '#EC4899', '#3B82F6', '#10B981', '#F59E0B'],
         });
 
-        setViewState('celebration');
-
-        const refreshed = await getAllCommunityEntries();
-        setCommunityEntries(refreshed);
-        setActiveCommunityIndex(0);
+        await loadEntries();
+        setViewState('feed');
       } else {
         setShareError(
-          'Your entry contains words or patterns we cannot share publicly. It remains saved in your private journal.'
+          result.error ||
+            'Unable to share to community right now. It remains saved in your private journal.'
         );
       }
     } catch (err) {
-      setShareError('Unable to share right now. Please try again in a moment.');
+      setShareError('Something went wrong. Please try again.');
     } finally {
       setIsSharing(false);
     }
@@ -135,8 +136,8 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
     );
   };
 
-  // STEP 1: If user just wrote a moment, ask if they'd like to share it
-  if (viewState === 'opt_in' && userEntry) {
+  // STEP 1: If user wrote a moment and hasn't shared yet, prompt them
+  if (viewState === 'opt_in' && userEntry && !userEntry.isSharedToCommunity) {
     return (
       <article
         id="user-moment-share-card"
@@ -198,7 +199,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
             className="w-full inline-flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-sans-clean font-bold text-sm py-3 px-4 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
           >
             <Share2 size={16} />
-            <span>{isSharing ? 'Sharing anonymously...' : 'Share with Fellow New Yorkers'}</span>
+            <span>{isSharing ? 'Sharing...' : 'Share with Fellow New Yorkers'}</span>
           </button>
 
           <button
@@ -214,47 +215,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
     );
   }
 
-  // STEP 2: Celebration banner after sharing
-  if (viewState === 'celebration') {
-    return (
-      <article
-        id="community-share-success-card"
-        className="relative w-full max-w-md mx-auto bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[24px] shadow-[6px_6px_0px_#18181b] p-6 flex flex-col items-center justify-center min-h-[400px] text-center select-none"
-      >
-        <div className="mb-4">
-          <CheckCircle
-            size={52}
-            className="text-emerald-600 fill-emerald-100 mx-auto"
-          />
-        </div>
-        <h2 className="font-card text-2xl sm:text-3xl font-bold text-zinc-900 mb-2">
-          Your moment is shared.
-        </h2>
-        <p className="font-sans-clean text-zinc-700 text-sm leading-relaxed mb-6 max-w-xs">
-          Other New Yorkers will see your moment of good today. Thank you for making NYC a little brighter.
-        </p>
-
-        <div className="w-full flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={() => setViewState('feed')}
-            className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-sans-clean font-bold text-sm py-3 px-4 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
-          >
-            Read what other New Yorkers shared →
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs text-zinc-600 hover:text-zinc-900 font-semibold py-1 transition-colors cursor-pointer"
-          >
-            Done for today
-          </button>
-        </div>
-      </article>
-    );
-  }
-
-  // STEP 3: Community Feed / Moments from Fellow New Yorkers
+  // STEP 2: Community Feed / Moments from Fellow New Yorkers
   const currentMoment =
     communityEntries.length > 0
       ? communityEntries[activeCommunityIndex]
@@ -265,9 +226,16 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
       id="community-moment-card"
       className="relative w-full max-w-md mx-auto bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[24px] shadow-[6px_6px_0px_#18181b] p-6 flex flex-col justify-between select-none text-zinc-900 min-h-[440px]"
     >
-      {/* Top metadata */}
+      {/* Top metadata & Banner */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        {userEntry?.isSharedToCommunity && (
+          <div className="mb-3 p-2.5 bg-emerald-100 border border-emerald-300 rounded-xl text-emerald-900 flex items-center gap-2 text-xs font-bold font-sans-clean">
+            <CheckCircle2 size={16} className="text-emerald-700 flex-shrink-0" />
+            <span>Your moment was shared anonymously with NYC!</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mb-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-200 border-2 border-zinc-900 text-purple-950 text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#18181b]">
             <MessageCircle size={14} className="text-purple-800" />
             <span>Community</span>
@@ -313,6 +281,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
               <button
                 type="button"
                 onClick={(e) => handleLike(currentMoment, e)}
+                title="Send love to this moment"
                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-zinc-900 text-xs font-bold transition-all cursor-pointer ${
                   likedIds.has(currentMoment.id)
                     ? 'bg-rose-100 text-rose-700 shadow-[1px_1px_0px_#18181b]'
@@ -337,9 +306,9 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
       </div>
 
       {/* Interactive Moment Navigation Controls & Footer Actions */}
-      <div className="mt-5 pt-4 border-t-2 border-zinc-900/20 flex flex-col gap-3">
+      <div className="mt-5 pt-4 border-t-2 border-zinc-900/20 flex flex-col gap-2.5">
         {communityEntries.length > 1 && (
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2 mb-1">
             <button
               id="btn-prev-community-moment"
               type="button"
@@ -367,7 +336,19 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
         )}
 
         <div className="flex gap-2">
-          {onWriteMoment && (
+          {onOpenCommunityBoard && (
+            <button
+              id="btn-open-community-board"
+              type="button"
+              onClick={onOpenCommunityBoard}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-sans-clean font-bold text-xs py-2.5 px-3 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+            >
+              <LayoutGrid size={13} />
+              <span>All Moments Wall</span>
+            </button>
+          )}
+
+          {onWriteMoment && !userEntry && (
             <button
               id="btn-community-write-moment"
               type="button"

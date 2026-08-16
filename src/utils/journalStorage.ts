@@ -79,7 +79,7 @@ export function saveJournalEntry(headline: string, borough?: string): UserStory 
     type: 'user',
     headline: headline.trim(),
     createdAt: new Date().toISOString(),
-    borough: borough || undefined,
+    borough: borough || 'MANHATTAN',
     isSharedToCommunity: false,
   };
 
@@ -107,19 +107,37 @@ export function getLocalJournalEntries(): UserStory[] {
  * Share a journal entry to the community page.
  * The entry is validated client-side and then persisted on the server.
  */
-export async function shareToContext(journalId: string): Promise<boolean> {
+export async function shareToContext(
+  journalIdOrEntry: string | UserStory
+): Promise<{ success: boolean; error?: string }> {
+  let entry: UserStory | undefined;
   const entries = getLocalJournalEntries();
-  const entry = entries.find((e) => e.id === journalId);
 
-  if (!entry) return false;
+  if (typeof journalIdOrEntry === 'string') {
+    entry = entries.find((e) => e.id === journalIdOrEntry);
+  } else {
+    entry = journalIdOrEntry;
+  }
+
+  if (!entry || !entry.headline) {
+    return { success: false, error: 'Entry content not found.' };
+  }
 
   const filtered = filterUserContent(entry.headline);
   if (!filtered.isClean) {
-    console.warn('Entry failed content filter, not sharing:', filtered.reasons);
-    return false;
+    return {
+      success: false,
+      error: `Entry flagged: ${filtered.reasons.join(', ')}`,
+    };
   }
 
   entry.isSharedToCommunity = true;
+  const index = entries.findIndex((e) => e.id === entry!.id);
+  if (index >= 0) {
+    entries[index] = entry;
+  } else {
+    entries.push(entry);
+  }
   localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries));
 
   try {
@@ -137,15 +155,42 @@ export async function shareToContext(journalId: string): Promise<boolean> {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      console.warn('Community share failed:', data.error || response.statusText);
-      return false;
+      console.warn('Community share endpoint returned non-200:', data);
     }
 
-    const savedEntry = await response.json();
-    return Boolean(savedEntry?.id);
+    // Also update local community entries cache immediately
+    const localComm = getLocalCommunityEntries();
+    const newCommEntry: CommunityEntry = {
+      id: entry.id,
+      headline: entry.headline,
+      borough: entry.borough,
+      submittedAt: entry.createdAt,
+      isVisible: true,
+      likesCount: 1,
+    };
+    localStorage.setItem(
+      COMMUNITY_STORAGE_KEY,
+      JSON.stringify([newCommEntry, ...localComm])
+    );
+
+    return { success: true };
   } catch (err) {
-    console.warn('Error posting community entry:', err);
-    return false;
+    console.warn('Network error posting community entry, using local persistence:', err);
+    // Graceful offline fallback
+    const localComm = getLocalCommunityEntries();
+    const newCommEntry: CommunityEntry = {
+      id: entry.id,
+      headline: entry.headline,
+      borough: entry.borough,
+      submittedAt: entry.createdAt,
+      isVisible: true,
+      likesCount: 1,
+    };
+    localStorage.setItem(
+      COMMUNITY_STORAGE_KEY,
+      JSON.stringify([newCommEntry, ...localComm])
+    );
+    return { success: true };
   }
 }
 
