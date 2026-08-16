@@ -12,6 +12,7 @@ import { PostcardShareModal } from "./components/PostcardShareModal";
 import { DataPipelineModal } from "./components/DataPipelineModal";
 import { CustomDatasetModal } from "./components/CustomDatasetModal";
 import { CommunityBoard } from "./components/CommunityBoard";
+import { JournalPage } from "./components/JournalPage";
 import { ShieldCheck, Heart, Sparkles, Database } from "lucide-react";
 
 export default function App() {
@@ -24,7 +25,8 @@ export default function App() {
     lastUpdated: "Just now",
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<"cards" | "map" | "community">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "map" | "journal" | "community">("cards");
+  const [activeStoryIndex, setActiveStoryIndex] = useState<number>(0);
 
   // Modals & Active Story States
   const [selectedMapStory, setSelectedMapStory] = useState<StoryItem | null>(
@@ -71,6 +73,14 @@ export default function App() {
     setViewMode("map");
   };
 
+  const handleOpenShare = () => {
+    const activeStory =
+      stories[activeStoryIndex] ||
+      stories[0] ||
+      getLocalFallbackStories().stories[0];
+    setPostcardModalStory(activeStory);
+  };
+
   const handleUseCustomDataset = async (datasetReference: string) => {
     setIsLoading(true);
     try {
@@ -99,19 +109,18 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FBF9F4] text-zinc-900 flex flex-col justify-between selection:bg-rose-200">
+    <div className="min-h-screen bg-[#FCE7F3] text-zinc-900 flex flex-col justify-between selection:bg-rose-200">
       {/* Top Application Header */}
       <Header
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
-        onRefresh={loadDailyStories}
-        isLoading={isLoading}
+        onOpenShare={handleOpenShare}
         onOpenPipeline={() => setIsPipelineModalOpen(true)}
         onOpenCustomDataset={() => setIsCustomDatasetModalOpen(true)}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-2 sm:py-4 flex flex-col items-center justify-center">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-2 sm:py-4 flex flex-col items-center justify-center">
         {viewMode === "cards" ? (
           <DailyStack
             stories={stories}
@@ -124,6 +133,7 @@ export default function App() {
             onOpenMap={() => setViewMode("map")}
             onOpenCommunityBoard={() => setViewMode("community")}
             onOpenDataPipeline={() => setIsPipelineModalOpen(true)}
+            onStoryChange={(idx) => setActiveStoryIndex(idx)}
           />
         ) : viewMode === "map" ? (
           <div className="w-full">
@@ -133,6 +143,14 @@ export default function App() {
               onSelectStory={setSelectedMapStory}
               onViewSource={(story) => setSourceModalStory(story)}
               onSendPostcard={(story) => setPostcardModalStory(story)}
+              onOpenCards={() => setViewMode("cards")}
+            />
+          </div>
+        ) : viewMode === "journal" ? (
+          <div className="w-full">
+            <JournalPage
+              onBackToStories={() => setViewMode("cards")}
+              onOpenCommunity={() => setViewMode("community")}
             />
           </div>
         ) : (

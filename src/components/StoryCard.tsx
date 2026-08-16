@@ -1,8 +1,8 @@
 import React from 'react';
 import { StoryItem } from '../types';
 import { CATEGORY_THEMES } from './CategoryBadge';
-import { DoodleIcon } from './DoodleIcon';
-import { Database, Send, MapPin, Sparkles, CheckCircle2 } from 'lucide-react';
+import { StoryIllustration } from './StoryIllustration';
+import { ArrowRight, Send, Database } from 'lucide-react';
 
 interface StoryCardProps {
   story: StoryItem;
@@ -13,130 +13,106 @@ interface StoryCardProps {
   className?: string;
 }
 
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  gather: 'Gathering',
+  care: 'Wildlife Care',
+  create: 'Filming & Art',
+  fix: 'Civic Fixing',
+};
+
 export const StoryCard: React.FC<StoryCardProps> = ({
   story,
   onViewSource,
   onSendPostcard,
   onLocateOnMap,
-  isCompact = false,
   className = '',
 }) => {
-  const { fact, line1, line2, detail, category, isAiGenerated } = story;
+  const { fact, line1, line2, detail, category } = story;
   const theme = CATEGORY_THEMES[category];
+  const categoryLabel = CATEGORY_DISPLAY_NAMES[category] || theme.name;
 
   return (
     <article
       id={`story-card-${story.id}`}
-      className={`relative w-full max-w-md mx-auto ${theme.bgCard} border-[2.5px] border-zinc-900 rounded-[24px] shadow-[5px_5px_0px_#18181b] p-5 sm:p-6 flex flex-col justify-between transition-all duration-200 select-none ${className}`}
+      className={`w-full max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-12 px-4 sm:px-8 py-4 sm:py-6 select-none ${className}`}
     >
-      {/* Top Meta Bar */}
-      <div>
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center flex-wrap gap-2">
-            {/* Category Tag */}
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full border-2 border-zinc-900 ${theme.bgPill} ${theme.textPill} text-xs sm:text-sm font-bold uppercase tracking-wider shadow-[2px_2px_0px_#18181b] gap-1.5`}
+      {/* Left Content Column */}
+      <div className="flex-1 w-full flex flex-col justify-center text-left">
+        {/* Date Header */}
+        <div className="mb-2">
+          <span className="font-sans-clean text-xs sm:text-sm font-bold tracking-wider text-zinc-800 uppercase">
+            {fact.dateBadge || 'AUG 16, SUN'}
+          </span>
+        </div>
+
+        {/* Big Serif Headline */}
+        <h2 className="font-card text-3xl sm:text-4xl lg:text-[44px] leading-[1.16] font-bold text-zinc-900 tracking-tight my-2">
+          <span>{line1}</span>
+          {line2 && <span className="block">{line2}</span>}
+        </h2>
+
+        {/* Category Pill */}
+        <div className="my-2.5">
+          <span className="inline-block bg-[#F2CBE9] text-[#421344] font-sans-clean font-bold text-xs sm:text-sm px-4 py-1 rounded-full shadow-xs">
+            {categoryLabel}
+          </span>
+        </div>
+
+        {/* Grounding Story Detail */}
+        <p className="font-sans-clean text-zinc-800 text-base sm:text-lg leading-relaxed font-normal my-2 max-w-xl">
+          {detail}
+        </p>
+
+        {/* Thin Divider Line */}
+        <div className="w-full max-w-lg h-[1.5px] bg-zinc-400/40 my-3 sm:my-4" />
+
+        {/* Source Citation & Modal Trigger */}
+        <div className="flex items-center justify-between max-w-lg text-xs sm:text-sm text-zinc-700 font-sans-clean font-medium">
+          <span className="truncate max-w-[260px]">
+            Source: {fact.datasetName || 'NYC 311 Service Requests'}
+          </span>
+          <button
+            type="button"
+            onClick={() => onViewSource(story)}
+            className="underline hover:text-zinc-900 cursor-pointer font-medium"
+          >
+            View Source Data
+          </button>
+        </div>
+
+        {/* Action Button: See Where -> */}
+        <div className="mt-5 sm:mt-6 flex items-center gap-3">
+          {onLocateOnMap && (
+            <button
+              id={`btn-see-where-${story.id}`}
+              type="button"
+              onClick={() => onLocateOnMap(story)}
+              className="inline-flex items-center gap-2.5 bg-zinc-900 hover:bg-black active:scale-95 text-white font-sans-clean font-bold text-sm sm:text-base px-6 sm:px-7 py-2.5 sm:py-3 rounded-full shadow-md hover:shadow-lg transition-all cursor-pointer"
             >
-              <DoodleIcon category={category} size={14} />
-              <span>{theme.emoji} {theme.name}</span>
-            </span>
+              <span>See where</span>
+              <ArrowRight size={16} />
+            </button>
+          )}
 
-            {/* Date Tag */}
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/90 border-2 border-zinc-900 text-zinc-900 text-xs font-bold uppercase tracking-wide shadow-[2px_2px_0px_#18181b]">
-              {fact.dateBadge}
-            </span>
-          </div>
-
-          {/* Borough Tag */}
-          <div className="flex items-center gap-1">
-            <span className="inline-flex items-center gap-1 text-xs font-bold text-zinc-800 bg-white/80 border-[1.5px] border-zinc-900 px-2 py-0.5 rounded-md shadow-[1.5px_1.5px_0px_#18181b]">
-              <MapPin size={12} className="text-zinc-700" />
-              {fact.borough}
-            </span>
-          </div>
-        </div>
-
-        {/* Decorative subtle doodle background element */}
-        <div className="absolute right-4 top-16 opacity-15 pointer-events-none text-zinc-900">
-          <DoodleIcon category={category} size={72} />
-        </div>
-
-        {/* Postcard Body: Two-line headline */}
-        <div className="my-3 sm:my-4 z-10 relative">
-          <h2 className="font-card text-2xl sm:text-[28px] leading-[1.22] text-zinc-900 font-bold tracking-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.7)]">
-            <span className="block">{line1}</span>
-            <span className="block">{line2}</span>
-          </h2>
-
-          {/* Grounding Detail sentence */}
-          <p className="mt-3 text-zinc-800 font-sans-clean text-sm sm:text-[15px] leading-relaxed font-medium">
-            {detail}
-          </p>
+          {/* Quick Postcard Share Action */}
+          <button
+            id={`btn-share-card-${story.id}`}
+            type="button"
+            onClick={() => onSendPostcard(story)}
+            className="inline-flex items-center gap-1.5 bg-white/80 hover:bg-white text-zinc-900 border border-zinc-300 font-sans-clean font-semibold text-xs sm:text-sm px-4 py-2.5 sm:py-3 rounded-full shadow-xs active:scale-95 transition-all cursor-pointer"
+          >
+            <Send size={14} className="text-zinc-700 -rotate-12" />
+            <span>Send card</span>
+          </button>
         </div>
       </div>
 
-      {/* Footer Area: Source citation & Action triggers */}
-      <div className="mt-4 pt-3 border-t-2 border-zinc-900/20 z-10">
-        <div className="flex items-center justify-between text-xs text-zinc-700 mb-3 font-sans-clean font-medium">
-          <span className="truncate max-w-[240px] italic">
-            Source: {fact.datasetName}
-          </span>
-          {isAiGenerated ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-600 bg-white/60 px-1.5 py-0.5 rounded border border-zinc-400">
-              <Sparkles size={10} className="text-amber-600" />
-              AI Voice
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-600 bg-white/60 px-1.5 py-0.5 rounded border border-zinc-400">
-              <CheckCircle2 size={10} className="text-emerald-600" />
-              Fact Verified
-            </span>
-          )}
-        </div>
-
-        {/* Bottom Actions */}
-        <div className="flex items-center gap-2">
-          <button
-            id={`btn-view-source-${story.id}`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewSource(story);
-            }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-50 active:bg-zinc-100 text-zinc-900 font-sans-clean font-bold text-xs sm:text-sm py-2 px-3 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
-          >
-            <Database size={14} />
-            <span>View source data</span>
-          </button>
-
-          <button
-            id={`btn-send-postcard-${story.id}`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSendPostcard(story);
-            }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 active:bg-black text-white font-sans-clean font-bold text-xs sm:text-sm py-2 px-3 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
-          >
-            <Send size={14} className="text-rose-300" />
-            <span>Send postcard</span>
-          </button>
-
-          {onLocateOnMap && (
-            <button
-              id={`btn-map-locate-${story.id}`}
-              type="button"
-              title="View on Map"
-              onClick={(e) => {
-                e.stopPropagation();
-                onLocateOnMap(story);
-              }}
-              className="inline-flex items-center justify-center bg-white hover:bg-zinc-50 text-zinc-900 p-2 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
-            >
-              <MapPin size={16} />
-            </button>
-          )}
-        </div>
+      {/* Right Column: Hand-drawn Vector Doodle Illustration */}
+      <div className="flex-1 w-full flex items-center justify-center py-2 md:py-4">
+        <StoryIllustration
+          category={category}
+          className="w-full max-w-[260px] sm:max-w-[320px] lg:max-w-[380px] drop-shadow-sm transition-transform duration-300 hover:scale-[1.02]"
+        />
       </div>
     </article>
   );
