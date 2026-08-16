@@ -53,9 +53,10 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
       if (shouldShare) {
         // 2. Share to public community feed
         const shared = await shareToContext(entry.id);
-        if (!shared) {
+        if (!shared.success) {
           setError(
-            'Your entry contains words or patterns we cannot share publicly. It is saved in your private journal.'
+            shared.error ||
+              'Your entry contains words or patterns we cannot share publicly. It is saved in your private journal.'
           );
           setIsSubmitting(false);
           return;

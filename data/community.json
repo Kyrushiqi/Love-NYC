@@ -1,25 +1,25 @@
 [
   {
-    "id": "community-1786895566571-o281rk",
-    "headline": "??",
+    "id": "community-1786898452585",
+    "headline": "hello",
     "borough": "MANHATTAN",
-    "submittedAt": "2026-08-16T15:52:43.097Z",
+    "submittedAt": "2026-08-16T16:40:52.585Z",
     "isVisible": true,
     "likesCount": 1
   },
   {
-    "id": "community-1786895543803-zdi6w0",
+    "id": "community-1786898435068",
     "headline": "hi",
     "borough": "MANHATTAN",
-    "submittedAt": "2026-08-16T15:52:23.782Z",
+    "submittedAt": "2026-08-16T16:40:35.068+00:00",
     "isVisible": true,
     "likesCount": 1
   },
   {
-    "id": "community-1786894807899-l5htm6",
-    "headline": "hi",
-    "borough": "MANHATTAN",
-    "submittedAt": "2026-08-16T15:40:06.989Z",
+    "id": "community-1786898375883-lx3gj2",
+    "headline": "A neighbor shared fresh warm bagels in the building lobby this morning!",
+    "borough": "BROOKLYN",
+    "submittedAt": "2026-08-16T16:39:35.883+00:00",
     "isVisible": true,
     "likesCount": 2
   },
@@ -27,7 +27,7 @@
     "id": "community-seed-1",
     "headline": "A stranger held the heavy train door at Union Square and smiled like we were old friends.",
     "borough": "MANHATTAN",
-    "submittedAt": "2026-08-16T13:39:43.507Z",
+    "submittedAt": "2026-08-16T14:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 26
   },
@@ -35,7 +35,7 @@
     "id": "community-seed-2",
     "headline": "Someone set up free bouquets of fresh zinnias in mason jars on their Greenpoint stoop.",
     "borough": "BROOKLYN",
-    "submittedAt": "2026-08-16T10:39:43.508Z",
+    "submittedAt": "2026-08-16T11:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 38
   },
@@ -43,7 +43,7 @@
     "id": "community-seed-3",
     "headline": "An impromptu acoustic jazz duo played in Astoria Park right as the golden hour hit.",
     "borough": "QUEENS",
-    "submittedAt": "2026-08-16T07:39:43.508Z",
+    "submittedAt": "2026-08-16T08:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 19
   },
@@ -51,7 +51,7 @@
     "id": "community-seed-4",
     "headline": "A high school brass band was practicing in the park and everyone passing by cheered.",
     "borough": "BRONX",
-    "submittedAt": "2026-08-16T03:39:43.508Z",
+    "submittedAt": "2026-08-16T04:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 42
   },
@@ -59,7 +59,7 @@
     "id": "community-seed-5",
     "headline": "Watched the ferry dock at St. George while three kids waved happily from the upper deck.",
     "borough": "STATEN ISLAND",
-    "submittedAt": "2026-08-15T21:39:43.508Z",
+    "submittedAt": "2026-08-15T22:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 15
   },
@@ -67,7 +67,7 @@
     "id": "community-seed-6",
     "headline": "A neighbor shoveled the entire corner sidewalk so elderly residents could reach the bus stop safely.",
     "borough": "BROOKLYN",
-    "submittedAt": "2026-08-15T15:39:43.508Z",
+    "submittedAt": "2026-08-15T16:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 56
   },
@@ -75,7 +75,7 @@
     "id": "community-seed-7",
     "headline": "The baker at the corner bodega slipped an extra warm cinnamon pastry into my brown bag.",
     "borough": "MANHATTAN",
-    "submittedAt": "2026-08-15T09:39:43.508Z",
+    "submittedAt": "2026-08-15T10:37:06.151399+00:00",
     "isVisible": true,
     "likesCount": 29
   }
