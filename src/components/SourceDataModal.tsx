@@ -81,7 +81,7 @@ export const SourceDataModal: React.FC<SourceDataModalProps> = ({ story, onClose
                   </span>
                 </div>
 
-                <div className="font-handwriting text-2xl sm:text-[26px] font-bold leading-snug text-zinc-900 mt-2">
+                <div className="font-card text-xl sm:text-[22px] font-bold leading-snug text-zinc-900 mt-2">
                   <div>{line1}</div>
                   <div>{line2}</div>
                 </div>

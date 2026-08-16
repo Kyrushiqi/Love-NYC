@@ -1,12 +1,13 @@
 import React from 'react';
 import { CitySummary } from '../types';
-import { RotateCcw, Map, Heart, Sparkles, CheckCircle, ExternalLink } from 'lucide-react';
+import { RotateCcw, Map, Heart, Sparkles, CheckCircle, ExternalLink, NotebookPen } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ClosingCardProps {
   summary: CitySummary;
   onRestart: () => void;
   onOpenMap: () => void;
+  onOpenJournal: () => void;
   onOpenDataPipeline: () => void;
 }
 
@@ -14,6 +15,7 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
   summary,
   onRestart,
   onOpenMap,
+  onOpenJournal,
   onOpenDataPipeline,
 }) => {
   React.useEffect(() => {
@@ -46,7 +48,7 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
 
         {/* Closing poetic statement from PRD */}
         <div className="my-3">
-          <h2 className="font-handwriting text-3xl sm:text-[38px] leading-[1.15] font-bold text-zinc-900">
+          <h2 className="font-card text-2xl sm:text-[32px] leading-[1.2] font-bold text-zinc-900">
             <span className="block">That's today.</span>
             <span className="block text-zinc-800">Come back tomorrow —</span>
           </h2>
@@ -111,6 +113,16 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
             <span>Map View</span>
           </button>
         </div>
+
+        <button
+          id="btn-closing-journal"
+          type="button"
+          onClick={onOpenJournal}
+          className="inline-flex items-center justify-center gap-2 bg-rose-100 hover:bg-rose-200 text-rose-900 font-sans-clean font-bold text-sm py-2.5 px-4 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
+        >
+          <NotebookPen size={15} />
+          <span>What's one positive thing that happened today?</span>
+        </button>
 
         <button
           id="btn-closing-pipeline"
