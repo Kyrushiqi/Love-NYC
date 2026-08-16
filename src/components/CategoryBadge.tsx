@@ -14,6 +14,7 @@ export const CATEGORY_THEMES: Record<
   {
     name: string;
     emoji: string;
+    bgColor: string; // Dynamic page background color
     bgCard: string;
     bgPill: string;
     textPill: string;
@@ -23,49 +24,65 @@ export const CATEGORY_THEMES: Record<
     sourceDataset: string;
   }
 > = {
-  fix: {
-    name: 'FIX',
-    emoji: '✨',
-    bgCard: 'bg-[#E0F2FE]', // Soft Sky Blue
-    bgPill: 'bg-[#BAE6FD]',
-    textPill: 'text-[#0369A1]',
-    borderPill: 'border-[#0284C7]',
-    accentColor: '#0284C7',
-    pinColor: '#0284C7',
-    sourceDataset: 'NYC 311 Service Requests',
-  },
   gather: {
-    name: 'GATHER',
+    name: 'Gathering',
     emoji: '🎵',
-    bgCard: 'bg-[#FEF9C3]', // Soft Warm Mustard
-    bgPill: 'bg-[#FDE047]',
-    textPill: 'text-[#854D0E]',
-    borderPill: 'border-[#CA8A04]',
-    accentColor: '#CA8A04',
-    pinColor: '#EAB308',
+    bgColor: '#FADCE9', // Soft Pink / Lilac
+    bgCard: 'bg-[#FADCE9]',
+    bgPill: 'bg-[#F2CEEF]',
+    textPill: 'text-[#421344]',
+    borderPill: 'border-transparent',
+    accentColor: '#D946EF',
+    pinColor: '#D946EF',
     sourceDataset: 'NYC Permitted Event Information',
   },
-  create: {
-    name: 'CREATE',
-    emoji: '🎬',
-    bgCard: 'bg-[#FFE4E6]', // Soft Coral
-    bgPill: 'bg-[#FECDD3]',
-    textPill: 'text-[#9F1239]',
-    borderPill: 'border-[#E11D48]',
-    accentColor: '#E11D48',
-    pinColor: '#F43F5E',
-    sourceDataset: 'NYC Film Permits (MOME)',
+  grow: {
+    name: 'Grow',
+    emoji: '🌱',
+    bgColor: '#BDD8F8', // Periwinkle Blue
+    bgCard: 'bg-[#BDD8F8]',
+    bgPill: 'bg-[#254BA8]',
+    textPill: 'text-white',
+    borderPill: 'border-transparent',
+    accentColor: '#2563EB',
+    pinColor: '#2563EB',
+    sourceDataset: 'NYC Parks Forestry',
+  },
+  fix: {
+    name: 'Fixed',
+    emoji: '✨',
+    bgColor: '#F9D79E', // Warm Ochre / Marigold Amber
+    bgCard: 'bg-[#F9D79E]',
+    bgPill: 'bg-[#E88022]',
+    textPill: 'text-white',
+    borderPill: 'border-transparent',
+    accentColor: '#D97706',
+    pinColor: '#D97706',
+    sourceDataset: 'NYC 311 Service Requests',
   },
   care: {
-    name: 'CARE',
-    emoji: '🐦',
-    bgCard: 'bg-[#DCFCE7]', // Soft Mint Sage
-    bgPill: 'bg-[#BBF7D0]',
-    textPill: 'text-[#15803D]',
-    borderPill: 'border-[#16A34A]',
-    accentColor: '#16A34A',
-    pinColor: '#22C55E',
+    name: 'Care',
+    emoji: '❤️',
+    bgColor: '#F9BCA9', // Soft Coral Peach / Terracotta
+    bgCard: 'bg-[#F9BCA9]',
+    bgPill: 'bg-[#EB5341]',
+    textPill: 'text-white',
+    borderPill: 'border-transparent',
+    accentColor: '#EA580C',
+    pinColor: '#EA580C',
     sourceDataset: 'Urban Park Ranger Animal Condition Response',
+  },
+  create: {
+    name: 'Create',
+    emoji: '🎬',
+    bgColor: '#FDF5A9', // Pale Lemon Yellow
+    bgCard: 'bg-[#FDF5A9]',
+    bgPill: 'bg-[#EAB308]',
+    textPill: 'text-zinc-900',
+    borderPill: 'border-transparent',
+    accentColor: '#CA8A04',
+    pinColor: '#CA8A04',
+    sourceDataset: 'NYC Film Permits (MOME)',
   },
 };
 

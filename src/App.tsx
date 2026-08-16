@@ -13,6 +13,7 @@ import { DataPipelineModal } from "./components/DataPipelineModal";
 import { CustomDatasetModal } from "./components/CustomDatasetModal";
 import { CommunityBoard } from "./components/CommunityBoard";
 import { JournalPage } from "./components/JournalPage";
+import { CATEGORY_THEMES } from "./components/CategoryBadge";
 import { ShieldCheck, Heart, Sparkles, Database } from "lucide-react";
 
 export default function App() {
@@ -108,8 +109,32 @@ export default function App() {
     }
   };
 
+  const activeStory = stories[activeStoryIndex] || stories[0];
+  const activeTheme = activeStory?.category
+    ? CATEGORY_THEMES[activeStory.category]
+    : CATEGORY_THEMES.gather;
+
+  const getPageBgColor = () => {
+    if (viewMode === "cards") {
+      return activeTheme?.bgColor || "#FADCE9";
+    }
+    if (viewMode === "map") {
+      return "#EAE8DF";
+    }
+    if (viewMode === "journal") {
+      return "#FADCE9";
+    }
+    if (viewMode === "community") {
+      return "#F5E8FB";
+    }
+    return "#FADCE9";
+  };
+
   return (
-    <div className="min-h-screen bg-[#FCE7F3] text-zinc-900 flex flex-col justify-between selection:bg-rose-200">
+    <div
+      className="min-h-screen text-zinc-900 flex flex-col justify-between selection:bg-rose-200 transition-colors duration-500 ease-in-out"
+      style={{ backgroundColor: getPageBgColor() }}
+    >
       {/* Top Application Header */}
       <Header
         viewMode={viewMode}

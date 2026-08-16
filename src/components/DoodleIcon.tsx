@@ -97,6 +97,27 @@ export const DoodleIcon: React.FC<DoodleIconProps> = ({ category, className = ''
         </svg>
       );
 
+    case 'grow':
+      return (
+        <svg
+          width={size}
+          height={size}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={className}
+        >
+          {/* Hand-drawn seedling sprout */}
+          <path d="M7 20h10" />
+          <path d="M12 20v-8" />
+          <path d="M12 12c-2.5-4-7-4-7-1 0 3.5 4.5 3.5 7 1z" />
+          <path d="M12 12c2.5-4 7-4 7-1 0 3.5-4.5 3.5-7 1z" />
+        </svg>
+      );
+
     default:
       return null;
   }
