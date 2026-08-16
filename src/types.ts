@@ -77,4 +77,5 @@ export interface CommunityEntry {
   borough?: string;
   submittedAt: string;
   isVisible: boolean; // Passes content filter
+  likesCount?: number; // Upvotes/reactions from fellow New Yorkers
 }

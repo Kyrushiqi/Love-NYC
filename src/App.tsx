@@ -11,6 +11,7 @@ import { SourceDataModal } from "./components/SourceDataModal";
 import { PostcardShareModal } from "./components/PostcardShareModal";
 import { DataPipelineModal } from "./components/DataPipelineModal";
 import { CustomDatasetModal } from "./components/CustomDatasetModal";
+import { CommunityBoard } from "./components/CommunityBoard";
 import { ShieldCheck, Heart, Sparkles, Database } from "lucide-react";
 
 export default function App() {
@@ -23,7 +24,7 @@ export default function App() {
     lastUpdated: "Just now",
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<"cards" | "map">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "map" | "community">("cards");
 
   // Modals & Active Story States
   const [selectedMapStory, setSelectedMapStory] = useState<StoryItem | null>(
@@ -123,7 +124,7 @@ export default function App() {
             onOpenMap={() => setViewMode("map")}
             onOpenDataPipeline={() => setIsPipelineModalOpen(true)}
           />
-        ) : (
+        ) : viewMode === "map" ? (
           <div className="w-full">
             <MapView
               stories={stories}
@@ -131,6 +132,12 @@ export default function App() {
               onSelectStory={setSelectedMapStory}
               onViewSource={(story) => setSourceModalStory(story)}
               onSendPostcard={(story) => setPostcardModalStory(story)}
+            />
+          </div>
+        ) : (
+          <div className="w-full">
+            <CommunityBoard
+              onBackToDailyStories={() => setViewMode("cards")}
             />
           </div>
         )}
