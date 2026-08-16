@@ -10,6 +10,10 @@ import {
   inferDatasetFields,
   parseDatasetReference,
 } from "./src/utils/datasetInput";
+import {
+  getSupabaseServerClient,
+  isSupabaseConfigured,
+} from "./src/utils/supabaseClient";
 
 dotenv.config();
 
@@ -119,19 +123,60 @@ async function ensureCommunityStore(): Promise<void> {
   }
 }
 
-async function readCommunityEntries(): Promise<unknown[]> {
-  await ensureCommunityStore();
+interface CommunityMomentItem {
+  id: string;
+  headline: string;
+  borough?: string;
+  submittedAt: string;
+  isVisible: boolean;
+  likesCount?: number;
+}
 
+async function readCommunityEntries(): Promise<CommunityMomentItem[]> {
+  // If Supabase is configured, fetch from Supabase
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getSupabaseServerClient();
+      if (supabase) {
+        const { data, error } = await supabase
+          .from("community_moments")
+          .select("*")
+          .eq("is_visible", true)
+          .order("submitted_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          return data.map((row) => ({
+            id: row.id,
+            headline: row.headline,
+            borough: row.borough,
+            submittedAt: row.submitted_at,
+            isVisible: row.is_visible,
+            likesCount: row.likes_count,
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn(
+        "[LOVE NYC] Error reading community entries from Supabase, falling back to local store:",
+        err,
+      );
+    }
+  }
+
+  // Local file fallback
+  await ensureCommunityStore();
   try {
     const text = await fs.readFile(COMMUNITY_FILE, "utf8");
     const parsed = JSON.parse(text || "[]");
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEED_COMMUNITY_MOMENTS;
+    return Array.isArray(parsed) && parsed.length > 0
+      ? parsed
+      : (SEED_COMMUNITY_MOMENTS as CommunityMomentItem[]);
   } catch (err) {
     console.warn(
       "[LOVE NYC] Unable to read community entries, using seed store:",
       err,
     );
-    return SEED_COMMUNITY_MOMENTS;
+    return SEED_COMMUNITY_MOMENTS as CommunityMomentItem[];
   }
 }
 
@@ -924,7 +969,12 @@ async function startServer() {
 
   // API: Health check
   app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", service: "LOVE NYC" });
+    res.json({
+      status: "ok",
+      service: "LOVE NYC",
+      supabase: isSupabaseConfigured() ? "configured" : "offline_fallback",
+      gemini: Boolean(process.env.GEMINI_API_KEY),
+    });
   });
 
   // API: Dataset status overview for transparency
@@ -1022,6 +1072,23 @@ async function startServer() {
         }),
       );
 
+      // Persist custom dataset to Supabase if configured
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = getSupabaseServerClient();
+          if (supabase) {
+            await supabase.from("custom_datasets").insert({
+              dataset_id: parsed.datasetId,
+              dataset_name: parsed.datasetId,
+              dataset_url: parsed.datasetUrl,
+              endpoint: parsed.endpoint,
+            });
+          }
+        } catch (dbErr) {
+          console.warn("[LOVE NYC] Supabase custom dataset insert error:", dbErr);
+        }
+      }
+
       const summary = {
         closed311Count: rows.length,
         gatheringsCount: 0,
@@ -1051,6 +1118,28 @@ async function startServer() {
     }
   });
 
+  // API: List saved custom datasets from Supabase
+  app.get("/api/custom-datasets", async (req, res) => {
+    try {
+      if (isSupabaseConfigured()) {
+        const supabase = getSupabaseServerClient();
+        if (supabase) {
+          const { data, error } = await supabase
+            .from("custom_datasets")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(20);
+          if (!error && data) {
+            return res.json(data);
+          }
+        }
+      }
+      res.json([]);
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
   // API: Community feed storage and sharing
   app.get("/api/community", async (req, res) => {
     try {
@@ -1066,7 +1155,7 @@ async function startServer() {
 
   app.post("/api/community/share", async (req, res) => {
     try {
-      const { headline, borough, createdAt } = req.body ?? {};
+      const { id: reqId, headline, borough, createdAt } = req.body ?? {};
 
       if (typeof headline !== "string" || !headline.trim()) {
         return res.status(400).json({ error: "Headline is required." });
@@ -1081,19 +1170,44 @@ async function startServer() {
       }
 
       const entry = {
-        id: `community-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id: typeof reqId === "string" && reqId.trim()
+          ? reqId.trim()
+          : `community-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         headline: headline.trim(),
-        borough: typeof borough === "string" ? normalizeBorough(borough) : undefined,
+        borough: typeof borough === "string" ? normalizeBorough(borough) : "MANHATTAN",
         submittedAt:
           typeof createdAt === "string" ? createdAt : new Date().toISOString(),
         isVisible: true,
         likesCount: 1,
       };
 
+      // Persist to Supabase if configured
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = getSupabaseServerClient();
+          if (supabase) {
+            const { error: dbError } = await supabase.from("community_moments").insert({
+              id: entry.id,
+              headline: entry.headline,
+              borough: entry.borough,
+              submitted_at: entry.submittedAt,
+              is_visible: entry.isVisible,
+              likes_count: entry.likesCount,
+            });
+            if (dbError) {
+              console.warn("[LOVE NYC] Supabase community moment insert failed:", dbError);
+            }
+          }
+        } catch (dbErr) {
+          console.warn("[LOVE NYC] Supabase error during community moment share:", dbErr);
+        }
+      }
+
+      // Also persist to local file store
       const entries = await readCommunityEntries();
       await writeCommunityEntries([
         entry,
-        ...(Array.isArray(entries) ? entries : []),
+        ...(Array.isArray(entries) ? entries.filter((e) => e.id !== entry.id) : []),
       ]);
       res.status(201).json(entry);
     } catch (err) {
@@ -1111,11 +1225,42 @@ async function startServer() {
         return res.status(400).json({ error: "Entry id is required." });
       }
 
-      const entries = (await readCommunityEntries()) as Array<{
-        id: string;
-        likesCount?: number;
-        [key: string]: unknown;
-      }>;
+      let updatedLikesCount: number | undefined;
+
+      // Increment in Supabase if configured
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = getSupabaseServerClient();
+          if (supabase) {
+            const { data, error } = await supabase.rpc("increment_community_likes", {
+              entry_id: id,
+            });
+            if (!error && typeof data === "number") {
+              updatedLikesCount = data;
+            } else if (error) {
+              console.warn("[LOVE NYC] Supabase like RPC error, attempting direct update:", error);
+              const { data: directData } = await supabase
+                .from("community_moments")
+                .select("likes_count")
+                .eq("id", id)
+                .single();
+              if (directData) {
+                const newLikes = (directData.likes_count || 0) + 1;
+                await supabase
+                  .from("community_moments")
+                  .update({ likes_count: newLikes })
+                  .eq("id", id);
+                updatedLikesCount = newLikes;
+              }
+            }
+          }
+        } catch (dbErr) {
+          console.warn("[LOVE NYC] Supabase like error:", dbErr);
+        }
+      }
+
+      // Sync local JSON store
+      const entries = await readCommunityEntries();
 
       let found = false;
       const updated = entries.map((item) => {
@@ -1123,7 +1268,7 @@ async function startServer() {
           found = true;
           return {
             ...item,
-            likesCount: (item.likesCount || 0) + 1,
+            likesCount: updatedLikesCount !== undefined ? updatedLikesCount : (item.likesCount || 0) + 1,
           };
         }
         return item;
@@ -1133,7 +1278,11 @@ async function startServer() {
         await writeCommunityEntries(updated);
       }
 
-      res.json({ success: true, id });
+      res.json({
+        success: true,
+        id,
+        likesCount: updatedLikesCount,
+      });
     } catch (err) {
       res.status(500).json({
         error: "Failed to like community entry",
@@ -1142,9 +1291,139 @@ async function startServer() {
     }
   });
 
+  // API: Save and sync personal journal entries in Supabase
+  app.post("/api/journal/save", async (req, res) => {
+    try {
+      const { id, headline, borough, isSharedToCommunity, createdAt } = req.body ?? {};
+
+      if (typeof headline !== "string" || !headline.trim()) {
+        return res.status(400).json({ error: "Headline is required." });
+      }
+
+      const journalId = typeof id === "string" && id.trim()
+        ? id.trim()
+        : `user-${Date.now()}`;
+      const entry = {
+        id: journalId,
+        headline: headline.trim(),
+        borough: typeof borough === "string" ? normalizeBorough(borough) : "MANHATTAN",
+        isSharedToCommunity: Boolean(isSharedToCommunity),
+        createdAt: typeof createdAt === "string" ? createdAt : new Date().toISOString(),
+      };
+
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = getSupabaseServerClient();
+          if (supabase) {
+            const { error: dbErr } = await supabase.from("journal_entries").upsert({
+              id: entry.id,
+              headline: entry.headline,
+              borough: entry.borough,
+              is_shared_to_community: entry.isSharedToCommunity,
+              created_at: entry.createdAt,
+            });
+            if (dbErr) {
+              console.warn("[LOVE NYC] Supabase journal entry upsert failed:", dbErr);
+            }
+          }
+        } catch (dbErr) {
+          console.warn("[LOVE NYC] Supabase journal save error:", dbErr);
+        }
+      }
+
+      res.status(201).json({ success: true, entry });
+    } catch (err) {
+      res.status(500).json({
+        error: "Failed to save journal entry",
+        message: (err as Error).message,
+      });
+    }
+  });
+
+  app.get("/api/journal", async (req, res) => {
+    try {
+      if (isSupabaseConfigured()) {
+        const supabase = getSupabaseServerClient();
+        if (supabase) {
+          const { data, error } = await supabase
+            .from("journal_entries")
+            .select("*")
+            .order("created_at", { ascending: false });
+          if (!error && data) {
+            return res.json(
+              data.map((row) => ({
+                id: row.id,
+                type: "user",
+                headline: row.headline,
+                borough: row.borough,
+                isSharedToCommunity: row.is_shared_to_community,
+                createdAt: row.created_at,
+              })),
+            );
+          }
+        }
+      }
+      res.json([]);
+    } catch (err) {
+      res.status(500).json({
+        error: "Failed to fetch journal entries",
+        message: (err as Error).message,
+      });
+    }
+  });
+
   // API: Fetch and generate daily 8-card story stack (2 from each category)
   app.get("/api/stories", async (req, res) => {
     try {
+      const todayStr = new Date().toISOString().split("T")[0];
+
+      // Check stories cache in Supabase first
+      if (isSupabaseConfigured()) {
+        try {
+          const supabase = getSupabaseServerClient();
+          if (supabase) {
+            const { data, error } = await supabase
+              .from("stories_cache")
+              .select("*")
+              .eq("date_str", todayStr);
+
+            if (!error && data && data.length >= 4) {
+              const cachedStories = data.map((row) => ({
+                id: row.id,
+                category: row.category as "fix" | "gather" | "create" | "care",
+                fact: row.fact as Record<string, unknown>,
+                line1: row.line1,
+                line2: row.line2,
+                detail: row.detail,
+                isAiGenerated: row.is_ai_generated,
+                generatedAt: row.generated_at,
+              }));
+
+              const summary = {
+                closed311Count: 14280,
+                gatheringsCount: 184,
+                filmsCount: 42,
+                wildlifeRescuesCount: 18,
+                lastUpdated: new Date().toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "2-digit",
+                }),
+              };
+
+              return res.json({
+                stories: cachedStories,
+                summary,
+                count: cachedStories.length,
+                isAiActive: !!process.env.GEMINI_API_KEY,
+                cached: true,
+              });
+            }
+          }
+        } catch (cacheErr) {
+          console.warn("[LOVE NYC] Supabase stories cache check error:", cacheErr);
+        }
+      }
+
       const categories: Array<"fix" | "gather" | "create" | "care"> = [
         "fix",
         "gather",
@@ -1180,6 +1459,30 @@ async function startServer() {
           };
         }),
       );
+
+      // Save generated stories to Supabase stories_cache
+      if (isSupabaseConfigured() && stories.length > 0) {
+        try {
+          const supabase = getSupabaseServerClient();
+          if (supabase) {
+            const cacheRows = stories.map((s) => ({
+              id: s.id,
+              category: s.category as "fix" | "gather" | "create" | "care" | "custom",
+              date_str: todayStr,
+              line1: s.line1,
+              line2: s.line2,
+              detail: s.detail,
+              is_ai_generated: s.isAiGenerated,
+              borough: (s.fact as { borough?: string })?.borough || null,
+              fact: s.fact,
+              generated_at: s.generatedAt,
+            }));
+            await supabase.from("stories_cache").upsert(cacheRows);
+          }
+        } catch (dbErr) {
+          console.warn("[LOVE NYC] Failed to cache stories in Supabase:", dbErr);
+        }
+      }
 
       const summary = {
         closed311Count: 14280,

@@ -1,15 +1,21 @@
 /**
  * Storage service for user journal entries and community entries.
- * Private journal entries stay local to the browser; shared community items are stored
- * on the server and persisted in a JSON file so all users can see the same feed.
+ * Private journal entries are stored locally in the browser and synced with Supabase.
+ * Shared community items are stored in Supabase community_moments and cached locally.
  */
 
 import { UserStory, CommunityEntry } from '../types';
 import { filterUserContent } from './contentFilter';
+import {
+  insertCommunityMomentDirect,
+  insertJournalEntryDirect,
+  isSupabaseConfigured,
+} from './supabaseClient';
 
 const JOURNAL_STORAGE_KEY = 'love_nyc_journal_entries';
 const COMMUNITY_STORAGE_KEY = 'love_nyc_community_entries';
 const COMMUNITY_API_URL = '/api/community';
+const JOURNAL_API_URL = '/api/journal';
 
 export const DEFAULT_COMMUNITY_FALLBACKS: CommunityEntry[] = [
   {
@@ -18,7 +24,7 @@ export const DEFAULT_COMMUNITY_FALLBACKS: CommunityEntry[] = [
     borough: 'MANHATTAN',
     submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     isVisible: true,
-    likesCount: 24,
+    likesCount: 26,
   },
   {
     id: 'community-seed-2',
@@ -71,7 +77,7 @@ export const DEFAULT_COMMUNITY_FALLBACKS: CommunityEntry[] = [
 ];
 
 /**
- * Save a new journal entry (private by default)
+ * Save a new journal entry (private by default) and sync to Supabase
  */
 export function saveJournalEntry(headline: string, borough?: string): UserStory {
   const entry: UserStory = {
@@ -87,7 +93,45 @@ export function saveJournalEntry(headline: string, borough?: string): UserStory 
   entries.push(entry);
   localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries));
 
+  // Asynchronously persist to Supabase & backend
+  syncJournalEntryToDatabase(entry).catch((err) => {
+    console.warn('[LOVE NYC] Journal database sync notice:', err);
+  });
+
   return entry;
+}
+
+/**
+ * Helper to sync a single journal entry to backend & Supabase
+ */
+export async function syncJournalEntryToDatabase(entry: UserStory): Promise<void> {
+  try {
+    // 1. Try backend endpoint
+    await fetch(`${JOURNAL_API_URL}/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: entry.id,
+        headline: entry.headline,
+        borough: entry.borough,
+        isSharedToCommunity: entry.isSharedToCommunity,
+        createdAt: entry.createdAt,
+      }),
+    }).catch(() => null);
+
+    // 2. Direct Supabase client sync if available
+    if (isSupabaseConfigured()) {
+      await insertJournalEntryDirect({
+        id: entry.id,
+        headline: entry.headline,
+        borough: entry.borough,
+        isSharedToCommunity: entry.isSharedToCommunity,
+        createdAt: entry.createdAt,
+      });
+    }
+  } catch (err) {
+    console.warn('[LOVE NYC] Journal sync skipped:', err);
+  }
 }
 
 /**
@@ -105,7 +149,7 @@ export function getLocalJournalEntries(): UserStory[] {
 
 /**
  * Share a journal entry to the community page.
- * The entry is validated client-side and then persisted on the server.
+ * The entry is validated and persisted to Supabase community_moments and local store.
  */
 export async function shareToContext(
   journalIdOrEntry: string | UserStory
@@ -140,13 +184,22 @@ export async function shareToContext(
   }
   localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries));
 
+  // Sync journal entry update to Supabase
+  syncJournalEntryToDatabase(entry).catch(() => {});
+
+  const momentId = entry.id.startsWith('community-')
+    ? entry.id
+    : `community-${entry.id.replace(/^user-/, '')}`;
+
   try {
+    // 1. Post to backend server endpoint (which saves to Supabase & local JSON)
     const response = await fetch(`${COMMUNITY_API_URL}/share`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        id: momentId,
         headline: entry.headline,
         borough: entry.borough,
         createdAt: entry.createdAt,
@@ -158,10 +211,22 @@ export async function shareToContext(
       console.warn('Community share endpoint returned non-200:', data);
     }
 
-    // Also update local community entries cache immediately
+    // 2. Direct Supabase insert fallback if needed
+    if (isSupabaseConfigured()) {
+      await insertCommunityMomentDirect({
+        id: momentId,
+        headline: entry.headline,
+        borough: entry.borough,
+        submittedAt: entry.createdAt,
+        isVisible: true,
+        likesCount: 1,
+      });
+    }
+
+    // 3. Update local community entries cache immediately
     const localComm = getLocalCommunityEntries();
     const newCommEntry: CommunityEntry = {
-      id: entry.id,
+      id: momentId,
       headline: entry.headline,
       borough: entry.borough,
       submittedAt: entry.createdAt,
@@ -170,7 +235,7 @@ export async function shareToContext(
     };
     localStorage.setItem(
       COMMUNITY_STORAGE_KEY,
-      JSON.stringify([newCommEntry, ...localComm])
+      JSON.stringify([newCommEntry, ...localComm.filter((c) => c.id !== momentId)])
     );
 
     return { success: true };
@@ -179,7 +244,7 @@ export async function shareToContext(
     // Graceful offline fallback
     const localComm = getLocalCommunityEntries();
     const newCommEntry: CommunityEntry = {
-      id: entry.id,
+      id: momentId,
       headline: entry.headline,
       borough: entry.borough,
       submittedAt: entry.createdAt,
@@ -188,7 +253,7 @@ export async function shareToContext(
     };
     localStorage.setItem(
       COMMUNITY_STORAGE_KEY,
-      JSON.stringify([newCommEntry, ...localComm])
+      JSON.stringify([newCommEntry, ...localComm.filter((c) => c.id !== momentId)])
     );
     return { success: true };
   }
@@ -214,7 +279,7 @@ export async function likeCommunityEntry(id: string): Promise<boolean> {
 }
 
 /**
- * Get all visible community entries from the server with a local fallback.
+ * Get all visible community entries from Supabase server with local fallback.
  */
 export async function getAllCommunityEntries(): Promise<CommunityEntry[]> {
   try {
@@ -223,6 +288,7 @@ export async function getAllCommunityEntries(): Promise<CommunityEntry[]> {
       const entries = (await response.json()) as CommunityEntry[];
       const visible = entries.filter((entry) => entry.isVisible);
       if (visible.length > 0) {
+        localStorage.setItem(COMMUNITY_STORAGE_KEY, JSON.stringify(visible));
         return visible;
       }
     }
@@ -272,6 +338,24 @@ export function getTodaysJournalEntry(): UserStory | null {
   return (
     entries.find((e) => new Date(e.createdAt).toDateString() === today) || null
   );
+}
+
+/**
+ * Fetch remote user journal entries from Supabase
+ */
+export async function fetchRemoteJournalEntries(): Promise<UserStory[]> {
+  try {
+    const res = await fetch(JOURNAL_API_URL);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch remote journal entries:', err);
+  }
+  return getLocalJournalEntries();
 }
 
 /**

@@ -305,32 +305,9 @@ export const CommunityBoard: React.FC<CommunityBoardProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <JournalPrompt
-              onEntryComplete={async (userEntry: UserStory) => {
-                // Post directly to community
-                try {
-                  const response = await fetch('/api/community/share', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      headline: userEntry.headline,
-                      borough: userEntry.borough,
-                      createdAt: userEntry.createdAt,
-                    }),
-                  });
-                  if (response.ok) {
-                    confetti({
-                      particleCount: 50,
-                      spread: 70,
-                      origin: { y: 0.6 },
-                      colors: ['#E11D48', '#A855F7', '#3B82F6', '#10B981'],
-                    });
-                    await loadEntries();
-                  }
-                } catch (err) {
-                  console.warn('Direct share failed:', err);
-                } finally {
-                  setIsPostingModalOpen(false);
-                }
+              onEntryComplete={async () => {
+                await loadEntries();
+                setIsPostingModalOpen(false);
               }}
               onSkip={() => setIsPostingModalOpen(false)}
             />
