@@ -1,9 +1,9 @@
 import React from "react";
-import { Layers, Map, Shuffle, Database, Sparkles, Heart } from "lucide-react";
+import { Layers, Map, Shuffle, Database, Sparkles, Heart, MessageCircle } from "lucide-react";
 
 interface HeaderProps {
-  viewMode: "cards" | "map";
-  onChangeViewMode: (mode: "cards" | "map") => void;
+  viewMode: "cards" | "map" | "community";
+  onChangeViewMode: (mode: "cards" | "map" | "community") => void;
   onRefresh: () => void;
   isLoading: boolean;
   onOpenPipeline: () => void;
@@ -51,8 +51,8 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Center/Right Actions: View Mode Switcher & Pipeline Button */}
-      <div className="flex items-center justify-between sm:justify-end gap-2.5">
-        {/* Segmented Control: Cards vs Map */}
+      <div className="flex items-center justify-between sm:justify-end gap-2">
+        {/* Segmented Control: Cards vs Map vs Community */}
         <div className="inline-flex p-1 bg-zinc-200/90 rounded-2xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b]">
           <button
             id="tab-cards-view"
@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Layers size={14} />
-            <span>Cards</span>
+            <span>Stories</span>
           </button>
 
           <button
@@ -80,6 +80,20 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Map size={14} />
             <span>Map</span>
+          </button>
+
+          <button
+            id="tab-community-view"
+            type="button"
+            onClick={() => onChangeViewMode("community")}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === "community"
+                ? "bg-purple-600 text-white border border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b]"
+                : "text-zinc-700 hover:text-zinc-900"
+            }`}
+          >
+            <MessageCircle size={14} />
+            <span>Moments</span>
           </button>
         </div>
 

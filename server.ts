@@ -47,12 +47,75 @@ const BOROUGH_COORDS: Record<string, { lat: number; lng: number }> = {
 const DATA_DIR = path.join(__dirname, "data");
 const COMMUNITY_FILE = path.join(DATA_DIR, "community.json");
 
+const SEED_COMMUNITY_MOMENTS = [
+  {
+    id: "community-seed-1",
+    headline: "A stranger held the heavy train door at Union Square and smiled like we were old friends.",
+    borough: "MANHATTAN",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    isVisible: true,
+    likesCount: 24,
+  },
+  {
+    id: "community-seed-2",
+    headline: "Someone set up free bouquets of fresh zinnias in mason jars on their Greenpoint stoop.",
+    borough: "BROOKLYN",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    isVisible: true,
+    likesCount: 38,
+  },
+  {
+    id: "community-seed-3",
+    headline: "An impromptu acoustic jazz duo played in Astoria Park right as the golden hour hit.",
+    borough: "QUEENS",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    isVisible: true,
+    likesCount: 19,
+  },
+  {
+    id: "community-seed-4",
+    headline: "A high school brass band was practicing in the park and everyone passing by cheered.",
+    borough: "BRONX",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    isVisible: true,
+    likesCount: 42,
+  },
+  {
+    id: "community-seed-5",
+    headline: "Watched the ferry dock at St. George while three kids waved happily from the upper deck.",
+    borough: "STATEN ISLAND",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+    isVisible: true,
+    likesCount: 15,
+  },
+  {
+    id: "community-seed-6",
+    headline: "A neighbor shoveled the entire corner sidewalk so elderly residents could reach the bus stop safely.",
+    borough: "BROOKLYN",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    isVisible: true,
+    likesCount: 56,
+  },
+  {
+    id: "community-seed-7",
+    headline: "The baker at the corner bodega slipped an extra warm cinnamon pastry into my brown bag.",
+    borough: "MANHATTAN",
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    isVisible: true,
+    likesCount: 29,
+  },
+];
+
 async function ensureCommunityStore(): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
-    await fs.access(COMMUNITY_FILE);
+    const text = await fs.readFile(COMMUNITY_FILE, "utf8");
+    const parsed = JSON.parse(text || "[]");
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      await fs.writeFile(COMMUNITY_FILE, JSON.stringify(SEED_COMMUNITY_MOMENTS, null, 2), "utf8");
+    }
   } catch {
-    await fs.writeFile(COMMUNITY_FILE, "[]", "utf8");
+    await fs.writeFile(COMMUNITY_FILE, JSON.stringify(SEED_COMMUNITY_MOMENTS, null, 2), "utf8");
   }
 }
 
@@ -62,13 +125,13 @@ async function readCommunityEntries(): Promise<unknown[]> {
   try {
     const text = await fs.readFile(COMMUNITY_FILE, "utf8");
     const parsed = JSON.parse(text || "[]");
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : SEED_COMMUNITY_MOMENTS;
   } catch (err) {
     console.warn(
-      "[LOVE NYC] Unable to read community entries, using empty store:",
+      "[LOVE NYC] Unable to read community entries, using seed store:",
       err,
     );
-    return [];
+    return SEED_COMMUNITY_MOMENTS;
   }
 }
 
@@ -1020,10 +1083,11 @@ async function startServer() {
       const entry = {
         id: `community-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         headline: headline.trim(),
-        borough: typeof borough === "string" ? borough : undefined,
+        borough: typeof borough === "string" ? normalizeBorough(borough) : undefined,
         submittedAt:
           typeof createdAt === "string" ? createdAt : new Date().toISOString(),
         isVisible: true,
+        likesCount: 1,
       };
 
       const entries = await readCommunityEntries();
@@ -1035,6 +1099,44 @@ async function startServer() {
     } catch (err) {
       res.status(500).json({
         error: "Failed to save community entry",
+        message: (err as Error).message,
+      });
+    }
+  });
+
+  app.post("/api/community/like", async (req, res) => {
+    try {
+      const { id } = req.body ?? {};
+      if (!id || typeof id !== "string") {
+        return res.status(400).json({ error: "Entry id is required." });
+      }
+
+      const entries = (await readCommunityEntries()) as Array<{
+        id: string;
+        likesCount?: number;
+        [key: string]: unknown;
+      }>;
+
+      let found = false;
+      const updated = entries.map((item) => {
+        if (item.id === id) {
+          found = true;
+          return {
+            ...item,
+            likesCount: (item.likesCount || 0) + 1,
+          };
+        }
+        return item;
+      });
+
+      if (found) {
+        await writeCommunityEntries(updated);
+      }
+
+      res.json({ success: true, id });
+    } catch (err) {
+      res.status(500).json({
+        error: "Failed to like community entry",
         message: (err as Error).message,
       });
     }

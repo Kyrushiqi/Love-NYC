@@ -11,15 +11,75 @@ const JOURNAL_STORAGE_KEY = 'love_nyc_journal_entries';
 const COMMUNITY_STORAGE_KEY = 'love_nyc_community_entries';
 const COMMUNITY_API_URL = '/api/community';
 
+export const DEFAULT_COMMUNITY_FALLBACKS: CommunityEntry[] = [
+  {
+    id: 'community-seed-1',
+    headline: 'A stranger held the heavy train door at Union Square and smiled like we were old friends.',
+    borough: 'MANHATTAN',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    isVisible: true,
+    likesCount: 24,
+  },
+  {
+    id: 'community-seed-2',
+    headline: 'Someone set up free bouquets of fresh zinnias in mason jars on their Greenpoint stoop.',
+    borough: 'BROOKLYN',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    isVisible: true,
+    likesCount: 38,
+  },
+  {
+    id: 'community-seed-3',
+    headline: 'An impromptu acoustic jazz duo played in Astoria Park right as the golden hour hit.',
+    borough: 'QUEENS',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    isVisible: true,
+    likesCount: 19,
+  },
+  {
+    id: 'community-seed-4',
+    headline: 'A high school brass band was practicing in the park and everyone passing by cheered.',
+    borough: 'BRONX',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+    isVisible: true,
+    likesCount: 42,
+  },
+  {
+    id: 'community-seed-5',
+    headline: 'Watched the ferry dock at St. George while three kids waved happily from the upper deck.',
+    borough: 'STATEN ISLAND',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 18).toISOString(),
+    isVisible: true,
+    likesCount: 15,
+  },
+  {
+    id: 'community-seed-6',
+    headline: 'A neighbor shoveled the entire corner sidewalk so elderly residents could reach the bus stop safely.',
+    borough: 'BROOKLYN',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    isVisible: true,
+    likesCount: 56,
+  },
+  {
+    id: 'community-seed-7',
+    headline: 'The baker at the corner bodega slipped an extra warm cinnamon pastry into my brown bag.',
+    borough: 'MANHATTAN',
+    submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    isVisible: true,
+    likesCount: 29,
+  },
+];
+
 /**
  * Save a new journal entry (private by default)
  */
-export function saveJournalEntry(headline: string): UserStory {
+export function saveJournalEntry(headline: string, borough?: string): UserStory {
   const entry: UserStory = {
     id: `user-${Date.now()}`,
     type: 'user',
     headline: headline.trim(),
     createdAt: new Date().toISOString(),
+    borough: borough || undefined,
     isSharedToCommunity: false,
   };
 
@@ -90,7 +150,47 @@ export async function shareToContext(journalId: string): Promise<boolean> {
 }
 
 /**
+ * Send a heart/like to a community entry
+ */
+export async function likeCommunityEntry(id: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${COMMUNITY_API_URL}/like`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id }),
+    });
+    return response.ok;
+  } catch (err) {
+    console.warn('Error sending like to community entry:', err);
+    return false;
+  }
+}
+
+/**
  * Get all visible community entries from the server with a local fallback.
+ */
+export async function getAllCommunityEntries(): Promise<CommunityEntry[]> {
+  try {
+    const response = await fetch(COMMUNITY_API_URL);
+    if (response.ok) {
+      const entries = (await response.json()) as CommunityEntry[];
+      const visible = entries.filter((entry) => entry.isVisible);
+      if (visible.length > 0) {
+        return visible;
+      }
+    }
+  } catch (err) {
+    console.warn('Falling back to local community entries:', err);
+  }
+
+  const localEntries = getLocalCommunityEntries().filter((entry) => entry.isVisible);
+  return localEntries.length > 0 ? localEntries : DEFAULT_COMMUNITY_FALLBACKS;
+}
+
+/**
+ * Get all local community entries stored in browser cache.
  */
 export function getLocalCommunityEntries(): CommunityEntry[] {
   try {
@@ -106,33 +206,15 @@ export function getLocalCommunityEntries(): CommunityEntry[] {
  * Get one featured community entry for today's view.
  */
 export async function getDailyFeaturedCommunityEntry(): Promise<CommunityEntry | null> {
-  try {
-    const response = await fetch(COMMUNITY_API_URL);
-    if (response.ok) {
-      const entries = (await response.json()) as CommunityEntry[];
-      const visible = entries.filter((entry) => entry.isVisible);
-      if (visible.length === 0) return null;
-
-      const today = new Date().toDateString();
-      const seed = today
-        .split('')
-        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const index = seed % visible.length;
-      return visible[index];
-    }
-  } catch (err) {
-    console.warn('Falling back to local community entries:', err);
-  }
-
-  const entries = getLocalCommunityEntries().filter((entry) => entry.isVisible);
-  if (entries.length === 0) return null;
+  const visible = await getAllCommunityEntries();
+  if (visible.length === 0) return null;
 
   const today = new Date().toDateString();
   const seed = today
     .split('')
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const index = seed % entries.length;
-  return entries[index];
+  const index = seed % visible.length;
+  return visible[index];
 }
 
 /**

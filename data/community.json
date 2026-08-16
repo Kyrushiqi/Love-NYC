@@ -1,0 +1,66 @@
+[
+  {
+    "id": "community-1786894807899-l5htm6",
+    "headline": "hi",
+    "borough": "MANHATTAN",
+    "submittedAt": "2026-08-16T15:40:06.989Z",
+    "isVisible": true,
+    "likesCount": 2
+  },
+  {
+    "id": "community-seed-1",
+    "headline": "A stranger held the heavy train door at Union Square and smiled like we were old friends.",
+    "borough": "MANHATTAN",
+    "submittedAt": "2026-08-16T13:39:43.507Z",
+    "isVisible": true,
+    "likesCount": 26
+  },
+  {
+    "id": "community-seed-2",
+    "headline": "Someone set up free bouquets of fresh zinnias in mason jars on their Greenpoint stoop.",
+    "borough": "BROOKLYN",
+    "submittedAt": "2026-08-16T10:39:43.508Z",
+    "isVisible": true,
+    "likesCount": 38
+  },
+  {
+    "id": "community-seed-3",
+    "headline": "An impromptu acoustic jazz duo played in Astoria Park right as the golden hour hit.",
+    "borough": "QUEENS",
+    "submittedAt": "2026-08-16T07:39:43.508Z",
+    "isVisible": true,
+    "likesCount": 19
+  },
+  {
+    "id": "community-seed-4",
+    "headline": "A high school brass band was practicing in the park and everyone passing by cheered.",
+    "borough": "BRONX",
+    "submittedAt": "2026-08-16T03:39:43.508Z",
+    "isVisible": true,
+    "likesCount": 42
+  },
+  {
+    "id": "community-seed-5",
+    "headline": "Watched the ferry dock at St. George while three kids waved happily from the upper deck.",
+    "borough": "STATEN ISLAND",
+    "submittedAt": "2026-08-15T21:39:43.508Z",
+    "isVisible": true,
+    "likesCount": 15
+  },
+  {
+    "id": "community-seed-6",
+    "headline": "A neighbor shoveled the entire corner sidewalk so elderly residents could reach the bus stop safely.",
+    "borough": "BROOKLYN",
+    "submittedAt": "2026-08-15T15:39:43.508Z",
+    "isVisible": true,
+    "likesCount": 56
+  },
+  {
+    "id": "community-seed-7",
+    "headline": "The baker at the corner bodega slipped an extra warm cinnamon pastry into my brown bag.",
+    "borough": "MANHATTAN",
+    "submittedAt": "2026-08-15T09:39:43.508Z",
+    "isVisible": true,
+    "likesCount": 29
+  }
+]

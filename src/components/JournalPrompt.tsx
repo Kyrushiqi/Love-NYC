@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { UserStory } from '../types';
-import { Heart, AlertCircle, CheckCircle } from 'lucide-react';
+import { Heart, AlertCircle, CheckCircle, MapPin } from 'lucide-react';
 import { validateJournalEntry } from '../utils/contentFilter';
 import { saveJournalEntry } from '../utils/journalStorage';
+
+const BOROUGHS = [
+  'MANHATTAN',
+  'BROOKLYN',
+  'QUEENS',
+  'BRONX',
+  'STATEN ISLAND',
+] as const;
 
 interface JournalPromptProps {
   onEntryComplete: (entry: UserStory) => void;
@@ -14,6 +22,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
   onSkip,
 }) => {
   const [input, setInput] = useState<string>('');
+  const [selectedBorough, setSelectedBorough] = useState<string>('MANHATTAN');
   const [error, setError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
@@ -40,13 +49,13 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
       // Simulate slight delay for UX
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const entry = saveJournalEntry(validated);
+      const entry = saveJournalEntry(validated, selectedBorough);
       setIsSuccess(true);
 
       // Brief celebration, then move to next screen
       setTimeout(() => {
         onEntryComplete(entry);
-      }, 1000);
+      }, 900);
     } catch (err) {
       setError('Something went wrong. Please try again.');
       setIsSubmitting(false);
@@ -55,7 +64,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
 
   if (isSuccess) {
     return (
-      <article className="relative w-full max-w-md mx-auto bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[24px] shadow-[6px_6px_0px_#18181b] p-6 flex flex-col items-center justify-center min-h-[320px] text-center">
+      <article className="relative w-full max-w-md mx-auto bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[24px] shadow-[6px_6px_0px_#18181b] p-6 flex flex-col items-center justify-center min-h-[340px] text-center select-none">
         <div className="mb-4">
           <CheckCircle
             size={48}
@@ -66,8 +75,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
           Your story matters.
         </h2>
         <p className="font-sans-clean text-zinc-700 text-sm leading-relaxed mb-4">
-          It's been added to your private journal. You can share it with the
-          community next.
+          It's saved in your private journal. You can share it anonymously with fellow New Yorkers next!
         </p>
       </article>
     );
@@ -76,38 +84,44 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
   return (
     <article className="relative w-full max-w-md mx-auto bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[24px] shadow-[6px_6px_0px_#18181b] p-6 flex flex-col justify-between select-none text-zinc-900">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-200 border-2 border-zinc-900 text-rose-900 text-xs font-bold uppercase tracking-wider shadow-[2px_2px_0px_#18181b]">
             <Heart size={14} className="fill-rose-600 text-rose-600" />
             <span>🫶 Yours</span>
           </span>
+
+          <span className="text-xs font-bold text-zinc-600 uppercase">
+            {new Date().toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            })}
+          </span>
         </div>
 
-        <h2 className="font-card text-2xl sm:text-[32px] leading-[1.2] font-bold text-zinc-900 mb-3">
+        <h2 className="font-card text-2xl sm:text-[30px] leading-[1.2] font-bold text-zinc-900 mb-2">
           What good thing happened to you
           <span className="block">in New York today?</span>
         </h2>
 
-        <p className="font-sans-clean text-zinc-600 text-sm leading-relaxed">
-          One small moment. Just for you to remember — or share with the
-          community if you'd like.
+        <p className="font-sans-clean text-zinc-600 text-xs sm:text-sm leading-relaxed">
+          One small moment. Private by default — or share anonymously with the community.
         </p>
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="mb-4">
+      <form onSubmit={handleSubmit} className="mb-3">
         <textarea
           value={input}
           onChange={(e) => {
             setInput(e.target.value.slice(0, MAX_LENGTH));
             setError('');
           }}
-          placeholder="e.g., A stranger held the door. A park was quieter than usual. The sunset was perfect."
+          placeholder="e.g., A stranger held the door. A park was quieter than usual. The sunset over the East River was stunning."
           maxLength={MAX_LENGTH}
           disabled={isSubmitting}
-          className={`w-full p-3 font-handwriting text-lg leading-relaxed border-2 border-zinc-900 rounded-lg bg-white text-zinc-900 placeholder-zinc-400 resize-none focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
-          rows={4}
+          className="w-full p-3 font-handwriting text-lg leading-relaxed border-2 border-zinc-900 rounded-xl bg-white text-zinc-900 placeholder-zinc-400 resize-none focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[inset_1.5px_1.5px_0px_rgba(0,0,0,0.06)]"
+          rows={3}
           aria-label="Your positive moment"
         />
 
@@ -119,6 +133,33 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
           {charCount > MAX_LENGTH * 0.9 && charCount < MAX_LENGTH && (
             <span className="text-amber-600 font-semibold">Keep it brief!</span>
           )}
+        </div>
+
+        {/* Borough selection */}
+        <div className="mt-3">
+          <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-zinc-600 mb-1.5">
+            <MapPin size={12} className="text-zinc-500" />
+            <span>Which borough did this happen in?</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {BOROUGHS.map((b) => {
+              const isSelected = selectedBorough === b;
+              return (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => setSelectedBorough(b)}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-full border border-zinc-900 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-rose-300 text-rose-950 shadow-[1.5px_1.5px_0px_#18181b]'
+                      : 'bg-white text-zinc-700 hover:bg-zinc-100'
+                  }`}
+                >
+                  {b}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Error message */}
@@ -138,7 +179,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
           disabled={input.trim().length === 0 || isSubmitting}
           className="w-full mt-4 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-sans-clean font-bold text-sm py-3 px-4 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
         >
-          {isSubmitting ? 'Saving...' : 'Save to My Journal'}
+          {isSubmitting ? 'Saving...' : 'Save & Share with Community'}
         </button>
       </form>
 
@@ -149,7 +190,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
         disabled={isSubmitting}
         className="text-xs text-zinc-600 hover:text-zinc-900 font-semibold py-1 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Skip for now
+        Skip to community moments →
       </button>
     </article>
   );
