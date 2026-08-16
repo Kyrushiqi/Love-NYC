@@ -11,6 +11,7 @@ interface MapViewProps {
   onSelectStory: (story: StoryItem | null) => void;
   onViewSource: (story: StoryItem) => void;
   onSendPostcard: (story: StoryItem) => void;
+  onOpenCards?: () => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -19,6 +20,7 @@ export const MapView: React.FC<MapViewProps> = ({
   onSelectStory,
   onViewSource,
   onSendPostcard,
+  onOpenCards,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -52,8 +54,8 @@ export const MapView: React.FC<MapViewProps> = ({
         subdomains: 'abcd',
       }).addTo(map);
 
-      // Custom zoom control in bottom right
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      // Custom zoom control in top right
+      L.control.zoom({ position: 'topright' }).addTo(map);
 
       const markersGroup = L.layerGroup().addTo(map);
       markersLayerRef.current = markersGroup;
@@ -180,7 +182,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* Floating Selected Story Postcard Drawer */}
       {selectedStory && (
-        <div className="absolute bottom-4 left-3 right-3 sm:left-auto sm:right-4 sm:w-[380px] z-20 animate-in fade-in slide-in-from-bottom-6 duration-200">
+        <div className="absolute bottom-16 left-3 right-3 sm:left-auto sm:right-4 sm:w-[380px] z-20 animate-in fade-in slide-in-from-bottom-6 duration-200">
           <div className="relative">
             <button
               type="button"
@@ -191,21 +193,54 @@ export const MapView: React.FC<MapViewProps> = ({
               <X size={14} />
             </button>
 
-            <StoryCard
-              story={selectedStory}
-              onViewSource={onViewSource}
-              onSendPostcard={onSendPostcard}
-              className="shadow-[6px_6px_0px_#18181b] border-[2.5px] max-h-[460px] overflow-y-auto"
-            />
+            <div className="bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[20px] shadow-[6px_6px_0px_#18181b] p-4 max-h-[460px] overflow-y-auto">
+              <StoryCard
+                story={selectedStory}
+                onViewSource={onViewSource}
+                onSendPostcard={onSendPostcard}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Map Hint info badge */}
+      {/* Map Hint info badge on bottom left */}
       {!selectedStory && (
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none bg-white/95 border-2 border-zinc-900 px-3 py-1.5 rounded-xl shadow-[3px_3px_0px_#18181b] text-xs font-bold text-zinc-800 flex items-center gap-1.5">
           <MapPin size={14} className="text-rose-500" />
           <span>Tap any pin to view its story postcard</span>
+        </div>
+      )}
+
+      {/* Bottom Right Floating Switcher */}
+      {onOpenCards && (
+        <div className="absolute bottom-4 right-4 z-20">
+          <div className="inline-flex items-center p-1 bg-white/95 backdrop-blur-xs rounded-full border-2 border-zinc-900 shadow-[3px_3px_0px_#18181b]">
+            <button
+              type="button"
+              onClick={onOpenCards}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M3 9h18" />
+                <path d="M9 21V9" />
+              </svg>
+              <span>Card view</span>
+            </button>
+
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold bg-zinc-900 text-white shadow-xs cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                <line x1="9" x2="9" y1="3" y2="18" />
+                <line x1="15" x2="15" y1="6" y2="21" />
+              </svg>
+              <span>Map</span>
+            </button>
+          </div>
         </div>
       )}
     </div>

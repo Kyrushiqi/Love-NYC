@@ -19,6 +19,7 @@ interface DailyStackProps {
   onOpenMap: () => void;
   onOpenCommunityBoard?: () => void;
   onOpenDataPipeline: () => void;
+  onStoryChange?: (index: number) => void;
 }
 
 export const DailyStack: React.FC<DailyStackProps> = ({
@@ -32,9 +33,14 @@ export const DailyStack: React.FC<DailyStackProps> = ({
   onOpenMap,
   onOpenCommunityBoard,
   onOpenDataPipeline,
+  onStoryChange,
 }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [direction, setDirection] = useState<number>(0);
+
+  useEffect(() => {
+    onStoryChange?.(currentIndex);
+  }, [currentIndex, onStoryChange]);
   
   // Track which screen we're on: 'cards' | 'closing' | 'journal' | 'community'
   const [screen, setScreen] = useState<'cards' | 'closing' | 'journal' | 'community'>('cards');
@@ -177,40 +183,9 @@ export const DailyStack: React.FC<DailyStackProps> = ({
   }
 
   return (
-    <div className="w-full max-w-md mx-auto flex flex-col items-center">
-      {/* Top Stack Bar: Card Counter & Live Shuffle trigger */}
-      <div className="w-full flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-zinc-700 font-sans-clean bg-white px-2.5 py-1 rounded-full border-[1.5px] border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b]">
-            {screen === 'journal' && 'Your Moment'}
-            {screen === 'community' && 'Community'}
-            {screen !== 'journal' && screen !== 'community' && (isClosingCard ? 'Ritual Complete' : `Story ${currentIndex + 1} of ${totalCards}`)}
-          </span>
-          {!isClosingCard && currentIndex < totalCards && screen === 'cards' && (
-            <span className="text-xs font-semibold text-zinc-500 hidden sm:inline">
-              Swipe or use ← → keys
-            </span>
-          )}
-        </div>
-
-        <button
-          id="btn-shuffle-stories"
-          type="button"
-          onClick={() => {
-            onRefresh();
-            setCurrentIndex(0);
-            setScreen('cards');
-            setJournalEntry(null);
-          }}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 bg-white hover:bg-zinc-100 active:bg-zinc-200 px-3 py-1 rounded-full border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
-        >
-          <Shuffle size={12} />
-          <span>Shuffle Live</span>
-        </button>
-      </div>
-
-      {/* Swipeable Card Area */}
-      <div className="relative w-full min-h-[470px] sm:min-h-[490px] flex items-center justify-center">
+    <div className="w-full max-w-5xl mx-auto flex flex-col items-center justify-between min-h-[calc(100vh-140px)] py-4">
+      {/* Swipeable Main Card Area */}
+      <div className="relative w-full flex-1 flex items-center justify-center min-h-[460px] sm:min-h-[500px]">
         <AnimatePresence initial={false} custom={direction} mode="wait">
           {screen === 'cards' && currentIndex < totalCards && (
             <motion.div
@@ -222,7 +197,7 @@ export const DailyStack: React.FC<DailyStackProps> = ({
               exit="exit"
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.4}
+              dragElastic={0.3}
               onDragEnd={handleDragEnd}
               className="w-full cursor-grab active:cursor-grabbing touch-pan-y"
             >
@@ -234,7 +209,7 @@ export const DailyStack: React.FC<DailyStackProps> = ({
               />
             </motion.div>
           )}
-          
+
           {screen === 'closing' && (
             <motion.div
               key="closing-card"
@@ -243,7 +218,7 @@ export const DailyStack: React.FC<DailyStackProps> = ({
               initial="enter"
               animate="center"
               exit="exit"
-              className="w-full"
+              className="w-full max-w-md mx-auto"
             >
               <ClosingCard
                 summary={summary}
@@ -262,7 +237,7 @@ export const DailyStack: React.FC<DailyStackProps> = ({
               />
             </motion.div>
           )}
-          
+
           {screen === 'journal' && (
             <motion.div
               key="journal-prompt"
@@ -271,26 +246,24 @@ export const DailyStack: React.FC<DailyStackProps> = ({
               initial="enter"
               animate="center"
               exit="exit"
-              className="w-full"
+              className="w-full max-w-md mx-auto"
             >
               <JournalPrompt
                 onEntryComplete={(entry) => {
                   setJournalEntry(entry);
-                  // Auto-advance to community page
                   setTimeout(() => {
                     setDirection(1);
                     setScreen('community');
                   }, 500);
                 }}
                 onSkip={() => {
-                  // Skip to community page without writing
                   setDirection(1);
                   setScreen('community');
                 }}
               />
             </motion.div>
           )}
-          
+
           {screen === 'community' && (
             <motion.div
               key="community-page"
@@ -309,7 +282,6 @@ export const DailyStack: React.FC<DailyStackProps> = ({
                   setScreen('journal');
                 }}
                 onClose={() => {
-                  // End of flow - reset everything
                   setDirection(-1);
                   setCurrentIndex(0);
                   setScreen('cards');
@@ -321,115 +293,67 @@ export const DailyStack: React.FC<DailyStackProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Navigation Controls: Left/Right Arrow Buttons & Dots */}
-      <div className="w-full mt-4 flex items-center justify-between px-2">
-        <button
-          id="btn-prev-card"
-          type="button"
-          onClick={handlePrev}
-          className={`p-2 rounded-xl border-2 border-zinc-900 font-bold transition-all shadow-[2px_2px_0px_#18181b] cursor-pointer ${
-            (screen === 'cards' && currentIndex === 0) ||
-            (screen !== 'cards' && screen !== 'closing' && screen !== 'journal')
-              ? 'opacity-30 bg-zinc-100 cursor-not-allowed pointer-events-none'
-              : 'bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px]'
-          }`}
-          aria-label="Previous"
-        >
-          <ChevronLeft size={20} />
-        </button>
+      {/* Bottom Bar: Centered Dots Pagination & Bottom Right View Mode Switcher */}
+      <div className="w-full flex items-center justify-between mt-6 px-4 relative">
+        {/* Left Spacer for symmetry */}
+        <div className="w-24 hidden sm:block" />
 
-        {/* Progress Dot Indicators */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {screen === 'cards' || screen === 'closing' ? (
-            <>
-              {stories.map((s, idx) => {
-                const theme = CATEGORY_THEMES[s.category];
-                const isSelected = screen === 'cards' && idx === currentIndex;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => handleDotClick(idx)}
-                    title={`${s.fact.categoryLabel}: ${s.fact.subject}`}
-                    className={`transition-all duration-200 rounded-full border-[1.5px] border-zinc-900 cursor-pointer ${
-                      isSelected
-                        ? `w-6 h-3 ${theme.bgPill} shadow-[1.5px_1.5px_0px_#18181b]`
-                        : 'w-2.5 h-2.5 bg-zinc-300 hover:bg-zinc-400'
-                    }`}
-                    aria-label={`Jump to story ${idx + 1}`}
-                  />
-                );
-              })}
-              {/* Closing Card Dot */}
-              <button
-                type="button"
-                onClick={() => handleDotClick(totalCards)}
-                title="Daily Summary"
-                className={`transition-all duration-200 rounded-full border-[1.5px] border-zinc-900 cursor-pointer ${
-                  screen === 'closing'
-                    ? 'w-6 h-3 bg-rose-300 shadow-[1.5px_1.5px_0px_#18181b]'
-                    : 'w-2.5 h-2.5 bg-zinc-300 hover:bg-zinc-400'
-                }`}
-                aria-label="Jump to summary"
-              />
-            </>
-          ) : (
-            <>
-              {/* Simplified dots for journal/community screens */}
-              <div
-                className={`w-2.5 h-2.5 rounded-full border-[1.5px] border-zinc-900 ${
-                  screen === 'journal' ? 'bg-rose-400' : 'bg-zinc-300'
-                }`}
-              />
-              <div
-                className={`w-2.5 h-2.5 rounded-full border-[1.5px] border-zinc-900 ${
-                  screen === 'community' ? 'bg-purple-400' : 'bg-zinc-300'
-                }`}
-              />
-            </>
-          )}
-        </div>
-
-        <button
-          id="btn-next-card"
-          type="button"
-          onClick={handleNext}
-          className={`p-2 rounded-xl border-2 border-zinc-900 font-bold transition-all shadow-[2px_2px_0px_#18181b] cursor-pointer ${
-            (screen === 'cards' && isClosingCard) ||
-            (screen === 'journal' && !journalEntry)
-              ? 'opacity-30 bg-zinc-100 cursor-not-allowed pointer-events-none'
-              : 'bg-white hover:bg-zinc-100 active:translate-x-[1px] active:translate-y-[1px]'
-          }`}
-          aria-label="Next"
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
-
-      {/* Category quick filter bar - only show on cards screen */}
-      {screen === 'cards' && (
-        <div className="w-full mt-5 pt-3 border-t border-zinc-300/80 flex items-center justify-center gap-1.5 flex-wrap">
-          <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider mr-1">
-            Jump to:
-          </span>
-          {(['fix', 'gather', 'create', 'care'] as const).map((cat) => {
-            const theme = CATEGORY_THEMES[cat];
-            const firstMatchIndex = stories.findIndex((s) => s.category === cat);
-            if (firstMatchIndex === -1) return null;
-
+        {/* Centered Pagination Dots */}
+        <div className="flex-1 flex items-center justify-center gap-2">
+          {stories.map((s, idx) => {
+            const isSelected = screen === 'cards' && idx === currentIndex;
             return (
               <button
-                key={cat}
+                key={s.id}
                 type="button"
-                onClick={() => handleDotClick(firstMatchIndex)}
-                className={`px-2.5 py-1 rounded-full text-xs font-bold border border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b] ${theme.bgPill} ${theme.textPill} hover:opacity-90 active:scale-95 transition-all cursor-pointer`}
-              >
-                {theme.emoji} {theme.name}
-              </button>
+                onClick={() => handleDotClick(idx)}
+                title={`${s.fact.categoryLabel}: ${s.fact.subject}`}
+                className={`transition-all duration-200 rounded-full cursor-pointer ${
+                  isSelected
+                    ? 'w-2.5 h-2.5 bg-zinc-900 scale-125'
+                    : 'w-2.5 h-2.5 bg-white/90 hover:bg-white border border-zinc-400/60'
+                }`}
+                aria-label={`Jump to story ${idx + 1}`}
+              />
             );
           })}
         </div>
-      )}
+
+        {/* Right Floating View Switcher: Card view vs Map */}
+        <div className="flex items-center justify-end">
+          <div className="inline-flex items-center p-1 bg-white/90 backdrop-blur-xs rounded-full border border-zinc-300 shadow-sm">
+            <button
+              id="bottom-tab-cards"
+              type="button"
+              onClick={() => {
+                setScreen('cards');
+              }}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold transition-all bg-zinc-900 text-white shadow-xs cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M3 9h18" />
+                <path d="M9 21V9" />
+              </svg>
+              <span>Card view</span>
+            </button>
+
+            <button
+              id="bottom-tab-map"
+              type="button"
+              onClick={onOpenMap}
+              className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold text-zinc-700 hover:text-zinc-900 transition-all cursor-pointer"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                <line x1="9" x2="9" y1="3" y2="18" />
+                <line x1="15" x2="15" y1="6" y2="21" />
+              </svg>
+              <span>Map</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
