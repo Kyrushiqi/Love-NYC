@@ -53,3 +53,28 @@ export interface DatasetStatus {
   endpoint: string;
   reliability: string;
 }
+
+/**
+ * User-submitted personal journal entry
+ * Private by default, can be shared to Community page
+ */
+export interface UserStory {
+  id: string;
+  type: 'user';
+  headline: string; // One line from user (auto-cropped to ~140 chars)
+  createdAt: string; // ISO timestamp
+  borough?: string; // Optional borough mention
+  isSharedToCommunity: boolean; // Whether user chose to share
+}
+
+/**
+ * Community entry: anonymized user-submitted positive moment
+ * Only shown if user opted into sharing
+ */
+export interface CommunityEntry {
+  id: string;
+  headline: string;
+  borough?: string;
+  submittedAt: string;
+  isVisible: boolean; // Passes content filter
+}

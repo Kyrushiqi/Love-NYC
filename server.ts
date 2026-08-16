@@ -1,9 +1,11 @@
 import express from 'express';
+import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
+import { filterUserContent } from './src/utils/contentFilter';
 
 dotenv.config();
 
@@ -37,6 +39,36 @@ const BOROUGH_COORDS: Record<string, { lat: number; lng: number }> = {
   'STATEN ISLAND': { lat: 40.5795, lng: -74.1502 },
   NYC: { lat: 40.7128, lng: -74.0060 },
 };
+
+const DATA_DIR = path.join(__dirname, 'data');
+const COMMUNITY_FILE = path.join(DATA_DIR, 'community.json');
+
+async function ensureCommunityStore(): Promise<void> {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fs.access(COMMUNITY_FILE);
+  } catch {
+    await fs.writeFile(COMMUNITY_FILE, '[]', 'utf8');
+  }
+}
+
+async function readCommunityEntries(): Promise<unknown[]> {
+  await ensureCommunityStore();
+
+  try {
+    const text = await fs.readFile(COMMUNITY_FILE, 'utf8');
+    const parsed = JSON.parse(text || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.warn('[LOVE NYC] Unable to read community entries, using empty store:', err);
+    return [];
+  }
+}
+
+async function writeCommunityEntries(entries: unknown[]): Promise<void> {
+  await ensureCommunityStore();
+  await fs.writeFile(COMMUNITY_FILE, JSON.stringify(entries, null, 2), 'utf8');
+}
 
 function normalizeBorough(rawBorough: unknown): string {
   if (!rawBorough || typeof rawBorough !== 'string') return 'MANHATTAN';
@@ -596,6 +628,48 @@ async function startServer() {
       },
     ];
     res.json({ datasets: statuses, geminiConfigured: !!process.env.GEMINI_API_KEY });
+  });
+
+  // API: Community feed storage and sharing
+  app.get('/api/community', async (req, res) => {
+    try {
+      const entries = await readCommunityEntries();
+      res.json(entries);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to load community entries', message: (err as Error).message });
+    }
+  });
+
+  app.post('/api/community/share', async (req, res) => {
+    try {
+      const { headline, borough, createdAt } = req.body ?? {};
+
+      if (typeof headline !== 'string' || !headline.trim()) {
+        return res.status(400).json({ error: 'Headline is required.' });
+      }
+
+      const filtered = filterUserContent(headline.trim());
+      if (!filtered.isClean) {
+        return res.status(400).json({
+          error: 'Entry failed content filter.',
+          reasons: filtered.reasons,
+        });
+      }
+
+      const entry = {
+        id: `community-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        headline: headline.trim(),
+        borough: typeof borough === 'string' ? borough : undefined,
+        submittedAt: typeof createdAt === 'string' ? createdAt : new Date().toISOString(),
+        isVisible: true,
+      };
+
+      const entries = await readCommunityEntries();
+      await writeCommunityEntries([entry, ...Array.isArray(entries) ? entries : []]);
+      res.status(201).json(entry);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to save community entry', message: (err as Error).message });
+    }
   });
 
   // API: Fetch and generate daily 8-card story stack (2 from each category)
