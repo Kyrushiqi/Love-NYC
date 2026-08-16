@@ -38,6 +38,19 @@ export const CustomDatasetModal: React.FC<CustomDatasetModalProps> = ({
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedDatasets, setSavedDatasets] = useState<Array<{ dataset_id: string; dataset_name: string }>>([]);
+
+  React.useEffect(() => {
+    // Fetch registered custom datasets from Supabase database
+    fetch("/api/custom-datasets")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setSavedDatasets(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const canSubmit = input.trim().length > 0 && !isLoading;
 
@@ -186,6 +199,26 @@ export const CustomDatasetModal: React.FC<CustomDatasetModalProps> = ({
               </button>
             ))}
           </div>
+
+          {savedDatasets.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
+                Saved in Supabase database:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {savedDatasets.map((ds) => (
+                  <button
+                    key={ds.dataset_id}
+                    type="button"
+                    onClick={() => setInput(ds.dataset_id)}
+                    className="text-[11px] font-bold text-emerald-900 bg-emerald-50 border border-emerald-600 rounded-full px-2.5 py-1 cursor-pointer hover:bg-emerald-100 shadow-[1px_1px_0px_rgba(0,0,0,0.1)]"
+                  >
+                    📦 {ds.dataset_id}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="rounded-xl border-2 border-rose-500 bg-rose-50 px-3 py-2 text-xs text-rose-700 font-medium">
