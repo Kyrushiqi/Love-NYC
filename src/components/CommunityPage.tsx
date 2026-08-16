@@ -74,7 +74,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
     return (
       <article className="relative w-full max-w-md mx-auto bg-[#F5F2EB] border-[2.5px] border-zinc-900 rounded-[24px] shadow-[6px_6px_0px_#18181b] p-6 flex flex-col items-center justify-center min-h-[380px] text-center">
         <div className="mb-4 text-5xl">💜</div>
-        <h2 className="font-handwriting text-2xl font-bold text-zinc-900 mb-3">
+        <h2 className="font-card text-2xl font-bold text-zinc-900 mb-3">
           Come back tomorrow
         </h2>
         <p className="font-sans-clean text-zinc-600 text-sm leading-relaxed mb-6">
@@ -116,9 +116,8 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
             </span>
           </div>
 
-          {/* Community Headline */}
           <div className="mb-4">
-            <h2 className="font-handwriting text-2xl sm:text-3xl leading-[1.2] font-bold text-zinc-900">
+            <h2 className="font-card text-2xl sm:text-[28px] leading-[1.22] font-bold text-zinc-900">
               {sharedEntry.headline}
             </h2>
           </div>
@@ -168,7 +167,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
             </span>
           </div>
 
-          <h2 className="font-handwriting text-2xl sm:text-3xl leading-[1.2] font-bold text-zinc-900 mb-4">
+          <h2 className="font-card text-2xl sm:text-[28px] leading-[1.22] font-bold text-zinc-900 mb-4">
             {userEntry.headline}
           </h2>
 
@@ -221,7 +220,7 @@ export const CommunityPage: React.FC<CommunityPageProps> = ({
           className="text-emerald-600 fill-emerald-100 mx-auto"
         />
       </div>
-      <h2 className="font-handwriting text-3xl font-bold text-zinc-900 mb-2">
+      <h2 className="font-card text-2xl sm:text-3xl font-bold text-zinc-900 mb-2">
         Your story is shared.
       </h2>
       <p className="font-sans-clean text-zinc-700 text-sm leading-relaxed mb-6">

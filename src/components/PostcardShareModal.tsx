@@ -101,9 +101,9 @@ export const PostcardShareModal: React.FC<PostcardShareModalProps> = ({ story, o
               </span>
             </div>
 
-            {/* Postcard Handwriting Message */}
+            {/* Postcard Message */}
             <div className="my-4 max-w-[80%]">
-              <h2 className="font-handwriting text-3xl sm:text-[34px] leading-tight font-bold text-zinc-900">
+              <h2 className="font-card text-2xl sm:text-[28px] leading-snug font-bold text-zinc-900">
                 <span className="block">{line1}</span>
                 <span className="block">{line2}</span>
               </h2>

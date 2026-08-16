@@ -1,6 +1,51 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Recoleta-Bold';
+  src: local('Recoleta-Bold'),
+       local('Recoleta Bold'),
+       local('Recoleta-Black'),
+       local('Recoleta-SemiBold'),
+       local('Recoleta SemiBold'),
+       local('Recoleta'),
+       url('https://fonts.cdnfonts.com/s/31694/Recoleta-RegularDEMO.woff') format('woff');
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Recoleta-SemiBold';
+  src: local('Recoleta-SemiBold'),
+       local('Recoleta SemiBold'),
+       local('Recoleta-Bold'),
+       local('Recoleta Bold'),
+       local('Recoleta'),
+       url('https://fonts.cdnfonts.com/s/31694/Recoleta-RegularDEMO.woff') format('woff');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Recoleta';
+  src: local('Recoleta-Bold'),
+       local('Recoleta Bold'),
+       local('Recoleta-SemiBold'),
+       local('Recoleta SemiBold'),
+       local('Recoleta'),
+       url('https://fonts.cdnfonts.com/s/31694/Recoleta-RegularDEMO.woff') format('woff');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer utilities {
+  .font-recoleta,
+  .font-card {
+    font-family: 'Recoleta-Bold', 'Recoleta-SemiBold', 'Recoleta', 'Fraunces', 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+  }
   .font-handwriting {
     font-family: 'Caveat', cursive, sans-serif;
   }

@@ -1,12 +1,13 @@
-import React from 'react';
-import { Layers, Map, Shuffle, Database, Sparkles, Heart } from 'lucide-react';
+import React from "react";
+import { Layers, Map, Shuffle, Database, Sparkles, Heart } from "lucide-react";
 
 interface HeaderProps {
-  viewMode: 'cards' | 'map';
-  onChangeViewMode: (mode: 'cards' | 'map') => void;
+  viewMode: "cards" | "map";
+  onChangeViewMode: (mode: "cards" | "map") => void;
   onRefresh: () => void;
   isLoading: boolean;
   onOpenPipeline: () => void;
+  onOpenCustomDataset: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefresh,
   isLoading,
   onOpenPipeline,
+  onOpenCustomDataset,
 }) => {
   return (
     <header className="w-full max-w-4xl mx-auto pt-4 pb-4 px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -55,11 +57,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-cards-view"
             type="button"
-            onClick={() => onChangeViewMode('cards')}
+            onClick={() => onChangeViewMode("cards")}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'cards'
-                ? 'bg-white text-zinc-900 border border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b]'
-                : 'text-zinc-600 hover:text-zinc-900'
+              viewMode === "cards"
+                ? "bg-white text-zinc-900 border border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b]"
+                : "text-zinc-600 hover:text-zinc-900"
             }`}
           >
             <Layers size={14} />
@@ -69,17 +71,27 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="tab-map-view"
             type="button"
-            onClick={() => onChangeViewMode('map')}
+            onClick={() => onChangeViewMode("map")}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === 'map'
-                ? 'bg-white text-zinc-900 border border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b]'
-                : 'text-zinc-600 hover:text-zinc-900'
+              viewMode === "map"
+                ? "bg-white text-zinc-900 border border-zinc-900 shadow-[1.5px_1.5px_0px_#18181b]"
+                : "text-zinc-600 hover:text-zinc-900"
             }`}
           >
             <Map size={14} />
             <span>Map</span>
           </button>
         </div>
+
+        <button
+          id="btn-open-custom-dataset"
+          type="button"
+          onClick={onOpenCustomDataset}
+          className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-zinc-900 bg-white hover:bg-zinc-100 active:bg-zinc-200 px-3 py-2 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+        >
+          <Database size={13} className="text-zinc-700" />
+          <span>Custom dataset</span>
+        </button>
 
         {/* Desktop Pipeline & Live Data Button */}
         <button

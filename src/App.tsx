@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { StoryItem, CitySummary } from './types';
-import { fetchStoriesFromServer, getLocalFallbackStories } from './utils/dataService';
-import { Header } from './components/Header';
-import { DailyStack } from './components/DailyStack';
-import { MapView } from './components/MapView';
-import { SourceDataModal } from './components/SourceDataModal';
-import { PostcardShareModal } from './components/PostcardShareModal';
-import { DataPipelineModal } from './components/DataPipelineModal';
-import { ShieldCheck, Heart, Sparkles, Database } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { StoryItem, CitySummary } from "./types";
+import {
+  fetchStoriesFromServer,
+  getLocalFallbackStories,
+} from "./utils/dataService";
+import { Header } from "./components/Header";
+import { DailyStack } from "./components/DailyStack";
+import { MapView } from "./components/MapView";
+import { SourceDataModal } from "./components/SourceDataModal";
+import { PostcardShareModal } from "./components/PostcardShareModal";
+import { DataPipelineModal } from "./components/DataPipelineModal";
+import { CustomDatasetModal } from "./components/CustomDatasetModal";
+import { ShieldCheck, Heart, Sparkles, Database } from "lucide-react";
 
 export default function App() {
   const [stories, setStories] = useState<StoryItem[]>([]);
@@ -16,16 +20,24 @@ export default function App() {
     gatheringsCount: 184,
     filmsCount: 42,
     wildlifeRescuesCount: 18,
-    lastUpdated: 'Just now',
+    lastUpdated: "Just now",
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<'cards' | 'map'>('cards');
-  
+  const [viewMode, setViewMode] = useState<"cards" | "map">("cards");
+
   // Modals & Active Story States
-  const [selectedMapStory, setSelectedMapStory] = useState<StoryItem | null>(null);
-  const [sourceModalStory, setSourceModalStory] = useState<StoryItem | null>(null);
-  const [postcardModalStory, setPostcardModalStory] = useState<StoryItem | null>(null);
-  const [isPipelineModalOpen, setIsPipelineModalOpen] = useState<boolean>(false);
+  const [selectedMapStory, setSelectedMapStory] = useState<StoryItem | null>(
+    null,
+  );
+  const [sourceModalStory, setSourceModalStory] = useState<StoryItem | null>(
+    null,
+  );
+  const [postcardModalStory, setPostcardModalStory] =
+    useState<StoryItem | null>(null);
+  const [isPipelineModalOpen, setIsPipelineModalOpen] =
+    useState<boolean>(false);
+  const [isCustomDatasetModalOpen, setIsCustomDatasetModalOpen] =
+    useState<boolean>(false);
 
   const loadDailyStories = async () => {
     setIsLoading(true);
@@ -40,7 +52,7 @@ export default function App() {
         setSummary(fallback.summary);
       }
     } catch (err) {
-      console.warn('Error loading stories, using fallback:', err);
+      console.warn("Error loading stories, using fallback:", err);
       const fallback = getLocalFallbackStories();
       setStories(fallback.stories);
       setSummary(fallback.summary);
@@ -55,7 +67,34 @@ export default function App() {
 
   const handleLocateOnMap = (story: StoryItem) => {
     setSelectedMapStory(story);
-    setViewMode('map');
+    setViewMode("map");
+  };
+
+  const handleUseCustomDataset = async (datasetReference: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/custom-dataset/use", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataset: datasetReference }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Unable to load custom dataset.");
+      }
+
+      if (data?.stories?.length) {
+        setStories(data.stories);
+        setSummary(data.summary || summary);
+        setViewMode("cards");
+      }
+    } catch (err) {
+      console.warn("Custom dataset load failed:", err);
+    } finally {
+      setIsLoading(false);
+      setIsCustomDatasetModalOpen(false);
+    }
   };
 
   return (
@@ -67,11 +106,12 @@ export default function App() {
         onRefresh={loadDailyStories}
         isLoading={isLoading}
         onOpenPipeline={() => setIsPipelineModalOpen(true)}
+        onOpenCustomDataset={() => setIsCustomDatasetModalOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-4 py-2 sm:py-4 flex flex-col items-center justify-center">
-        {viewMode === 'cards' ? (
+        {viewMode === "cards" ? (
           <DailyStack
             stories={stories}
             summary={summary}
@@ -80,7 +120,7 @@ export default function App() {
             onViewSource={(story) => setSourceModalStory(story)}
             onSendPostcard={(story) => setPostcardModalStory(story)}
             onLocateOnMap={handleLocateOnMap}
-            onOpenMap={() => setViewMode('map')}
+            onOpenMap={() => setViewMode("map")}
             onOpenDataPipeline={() => setIsPipelineModalOpen(true)}
           />
         ) : (
@@ -132,6 +172,13 @@ export default function App() {
       {/* System Pipeline Modal */}
       {isPipelineModalOpen && (
         <DataPipelineModal onClose={() => setIsPipelineModalOpen(false)} />
+      )}
+
+      {isCustomDatasetModalOpen && (
+        <CustomDatasetModal
+          onClose={() => setIsCustomDatasetModalOpen(false)}
+          onUseDataset={handleUseCustomDataset}
+        />
       )}
     </div>
   );

@@ -61,9 +61,9 @@ export const StoryCard: React.FC<StoryCardProps> = ({
           <DoodleIcon category={category} size={72} />
         </div>
 
-        {/* Postcard Body: Two-line handwriting headline */}
+        {/* Postcard Body: Two-line headline */}
         <div className="my-3 sm:my-4 z-10 relative">
-          <h2 className="font-handwriting text-3xl sm:text-[34px] leading-[1.18] text-zinc-900 font-bold tracking-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.7)]">
+          <h2 className="font-card text-2xl sm:text-[28px] leading-[1.22] text-zinc-900 font-bold tracking-tight drop-shadow-[0_1px_0_rgba(255,255,255,0.7)]">
             <span className="block">{line1}</span>
             <span className="block">{line2}</span>
           </h2>

@@ -164,7 +164,7 @@ export const DailyStack: React.FC<DailyStackProps> = ({
           <div className="w-16 h-16 rounded-full border-4 border-zinc-900 border-t-rose-500 animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center text-xl">❤️</div>
         </div>
-        <h3 className="font-handwriting text-3xl font-bold text-zinc-900 mb-2">
+        <h3 className="font-card text-2xl sm:text-3xl font-bold text-zinc-900 mb-2">
           Gathering good news...
         </h3>
         <p className="text-zinc-600 text-sm text-center font-sans-clean font-medium">

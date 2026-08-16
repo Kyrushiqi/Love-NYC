@@ -62,7 +62,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
             className="text-emerald-600 fill-emerald-100 mx-auto"
           />
         </div>
-        <h2 className="font-handwriting text-3xl font-bold text-zinc-900 mb-2">
+        <h2 className="font-card text-2xl sm:text-3xl font-bold text-zinc-900 mb-2">
           Your story matters.
         </h2>
         <p className="font-sans-clean text-zinc-700 text-sm leading-relaxed mb-4">
@@ -84,7 +84,7 @@ export const JournalPrompt: React.FC<JournalPromptProps> = ({
           </span>
         </div>
 
-        <h2 className="font-handwriting text-3xl sm:text-[38px] leading-[1.15] font-bold text-zinc-900 mb-3">
+        <h2 className="font-card text-2xl sm:text-[32px] leading-[1.2] font-bold text-zinc-900 mb-3">
           What good thing happened to you
           <span className="block">in New York today?</span>
         </h2>

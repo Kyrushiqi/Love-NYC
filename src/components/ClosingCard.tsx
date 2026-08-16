@@ -48,7 +48,7 @@ export const ClosingCard: React.FC<ClosingCardProps> = ({
 
         {/* Closing poetic statement from PRD */}
         <div className="my-3">
-          <h2 className="font-handwriting text-3xl sm:text-[38px] leading-[1.15] font-bold text-zinc-900">
+          <h2 className="font-card text-2xl sm:text-[32px] leading-[1.2] font-bold text-zinc-900">
             <span className="block">That's today.</span>
             <span className="block text-zinc-800">Come back tomorrow —</span>
           </h2>
