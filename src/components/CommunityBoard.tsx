@@ -129,26 +129,33 @@ export const CommunityBoard: React.FC<CommunityBoardProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              id="btn-open-post-moment"
-              type="button"
-              onClick={() => setIsPostingModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white font-sans-clean font-bold text-sm py-2.5 px-4 rounded-xl border-2 border-zinc-900 shadow-[2.5px_2.5px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
-            >
-              <PenLine size={15} />
-              <span>Post Your Moment</span>
-            </button>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <img
+              src="/community.svg"
+              alt="Community moments"
+              className="w-14 h-14 sm:w-16 sm:h-16 object-contain hidden md:block"
+            />
+            <div className="flex items-center gap-2">
+              <button
+                id="btn-open-post-moment"
+                type="button"
+                onClick={() => setIsPostingModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white font-sans-clean font-bold text-sm py-2.5 px-4 rounded-xl border-2 border-zinc-900 shadow-[2.5px_2.5px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#18181b] transition-all cursor-pointer"
+              >
+                <PenLine size={15} />
+                <span>Post Your Moment</span>
+              </button>
 
-            <button
-              id="btn-back-to-stories"
-              type="button"
-              onClick={onBackToDailyStories}
-              className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-900 font-sans-clean font-bold text-sm py-2.5 px-3.5 rounded-xl border-2 border-zinc-900 shadow-[2px_2px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-            >
-              <RotateCcw size={14} />
-              <span className="hidden sm:inline">Daily Stories</span>
-            </button>
+              <button
+                id="btn-back-to-stories"
+                type="button"
+                onClick={onBackToDailyStories}
+                className="inline-flex items-center justify-center gap-1.5 bg-white hover:bg-zinc-100 text-zinc-900 font-sans-clean font-bold text-sm py-2.5 px-3.5 rounded-xl border-2 border-zinc-900 shadow-[2.5px_2.5px_0px_#18181b] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+              >
+                <RotateCcw size={15} />
+                <span className="hidden sm:inline">Daily Stories</span>
+              </button>
+            </div>
           </div>
         </div>
 
