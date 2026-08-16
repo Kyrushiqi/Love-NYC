@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-handwriting {
+    font-family: 'Caveat', cursive, sans-serif;
+  }
+  .font-sans-clean {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  }
+  .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Neo-brutalist / Sticker shadow utilities */
+.sticker-shadow-sm {
+  box-shadow: 2px 2px 0px #18181b;
+}
+
+.sticker-shadow {
+  box-shadow: 4px 4px 0px #18181b;
+}
+
+.sticker-shadow-lg {
+  box-shadow: 6px 6px 0px #18181b;
+}
+
+.sticker-shadow-hover {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sticker-shadow-hover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #18181b;
+}
+
+.sticker-shadow-hover:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #18181b;
+}
+
+/* Custom scrollbar for source data inspector */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1ede4;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4ccb8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a89f88;
+}
+
+/* Leaflet map styling overrides to match sticker aesthetic */
+.leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  border: 2px solid #18181b !important;
+  border-radius: 14px !important;
+  box-shadow: 4px 4px 0px #18181b !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.leaflet-popup-tip {
+  background: #18181b !important;
+}
+

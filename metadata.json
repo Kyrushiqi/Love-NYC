@@ -1,0 +1,7 @@
+{
+  "name": "LOVE NYC",
+  "description": "A daily civic storytelling app that turns real NYC Open Data into short, warm, swipeable stories about small good things happening across the city.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
