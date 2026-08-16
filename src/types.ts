@@ -1,4 +1,4 @@
-export type StoryCategory = 'fix' | 'gather' | 'create' | 'care';
+export type StoryCategory = 'fix' | 'gather' | 'create' | 'care' | 'grow';
 
 export type Borough = 'MANHATTAN' | 'BROOKLYN' | 'QUEENS' | 'BRONX' | 'STATEN ISLAND' | 'NYC';
 

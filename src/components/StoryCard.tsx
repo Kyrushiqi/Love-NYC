@@ -53,8 +53,10 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
         {/* Category Pill */}
         <div className="my-2.5">
-          <span className="inline-block bg-[#F2CBE9] text-[#421344] font-sans-clean font-bold text-xs sm:text-sm px-4 py-1 rounded-full shadow-xs">
-            {categoryLabel}
+          <span
+            className={`inline-block ${theme.bgPill} ${theme.textPill} font-sans-clean font-bold text-xs sm:text-sm px-4 py-1 rounded-full shadow-xs`}
+          >
+            {theme.name}
           </span>
         </div>
 
